@@ -49,8 +49,8 @@ function generateJwtKeys(projectName) {
   };
 }
 
-function connString(dbName, user = DB_USER, pass = DB_PASS) {
-  return `postgresql://${user}:${pass}@${DB_HOST}:${DB_PORT}/${dbName}`;
+function connString(dbName, user = DB_USER, pass = DB_PASS, host = DB_HOST) {
+  return `postgresql://${user}:${pass}@${host}:${DB_PORT}/${dbName}`;
 }
 
 async function getProjectClient(dbName) {
@@ -596,14 +596,19 @@ app.get('/api/projects/:name/info', async (req, res) => {
 
     const creds = await getProjectCredentials(dbName);
     const keys = generateJwtKeys(dbName);
+
+    // Auto-detect host IP / domain name from incoming request (ideal for VPS deployments)
+    const hostHeader = req.headers.host ? req.headers.host.split(':')[0] : null;
+    const detectedHost = process.env.POSTGRES_PUBLIC_HOST || hostHeader || DB_HOST;
+
     res.json({
       success: true,
       info: {
         name: dbName, size: sizeR.rows[0].size,
         tableCount: parseInt(tblR.rows[0].count, 10),
-        connectionString: connString(dbName, creds.dbUser, creds.dbPassword),
+        connectionString: connString(dbName, creds.dbUser, creds.dbPassword, detectedHost),
         anonKey: keys.anonKey, serviceRoleKey: keys.serviceRoleKey,
-        host: DB_HOST, port: DB_PORT, user: creds.dbUser, password: creds.dbPassword,
+        host: detectedHost, port: DB_PORT, user: creds.dbUser, password: creds.dbPassword,
       },
     });
   } catch (e) {

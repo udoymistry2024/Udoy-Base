@@ -897,7 +897,10 @@ function renderDashboardView() {
               Direct PostgreSQL Connection URI
             </div>
             <div class="copy-field">
-              <span class="field-value">${p.connectionString}</span>
+              <span class="field-value" id="dashConnUri" data-hidden="true">${getMaskedConnString(p.connectionString, p.password)}</span>
+              <button class="copy-btn" title="Show URI Password" onclick="toggleConnUriVisibility('dashConnUri', this, '${p.connectionString}', '${p.password}')">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
               <button class="copy-btn" title="Copy URI" onclick="copyToClipboard('${p.connectionString}')">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
@@ -945,7 +948,15 @@ function renderDashboardView() {
               </div>
               <div>
                 <div class="conn-label" style="font-size:11px">Password</div>
-                <div class="copy-field" style="padding:6px 10px"><span class="field-value">${p.password}</span></div>
+                <div class="copy-field" style="padding:6px 10px">
+                  <span class="field-value" id="dashPass" data-hidden="true">••••••••••••</span>
+                  <button class="copy-btn" title="Show Password" onclick="toggleValueVisibility('dashPass', this, '${p.password}')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                  <button class="copy-btn" title="Copy Password" onclick="copyToClipboard('${p.password}')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1563,8 +1574,11 @@ function renderSettingsView() {
               Direct PostgreSQL URI
             </div>
             <div class="copy-field">
-              <span class="field-value">${p.connectionString}</span>
-              <button class="copy-btn" onclick="copyToClipboard('${p.connectionString}')">
+              <span class="field-value" id="settingsConnUri" data-hidden="true">${getMaskedConnString(p.connectionString, p.password)}</span>
+              <button class="copy-btn" title="Show URI Password" onclick="toggleConnUriVisibility('settingsConnUri', this, '${p.connectionString}', '${p.password}')">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="copy-btn" title="Copy URI" onclick="copyToClipboard('${p.connectionString}')">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
             </div>
@@ -1615,7 +1629,7 @@ function renderSettingsView() {
                 <div class="conn-label">User (Dedicated Role)</div>
                 <div class="copy-field">
                   <span class="field-value">${p.user}</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${p.user}')">
+                  <button class="copy-btn" title="Copy User" onclick="copyToClipboard('${p.user}')">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
                 </div>
@@ -1623,8 +1637,11 @@ function renderSettingsView() {
               <div>
                 <div class="conn-label">Password</div>
                 <div class="copy-field">
-                  <span class="field-value">${p.password}</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${p.password}')">
+                  <span class="field-value" id="settingsPass" data-hidden="true">••••••••••••</span>
+                  <button class="copy-btn" title="Show Password" onclick="toggleValueVisibility('settingsPass', this, '${p.password}')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                  <button class="copy-btn" title="Copy Password" onclick="copyToClipboard('${p.password}')">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
                 </div>
@@ -2412,6 +2429,49 @@ async function saveNewPassword() {
     loadProjectInfo(currentProject);
   } else {
     showToast('error', res.message || 'Failed to update password');
+  }
+}
+
+// ====================================================================
+// Password Masking & Eye Icon Visibility Toggles
+// ====================================================================
+
+function getMaskedConnString(connStr, password) {
+  if (!connStr || !password) return connStr;
+  return connStr.replace(`:${password}@`, ':••••••••••••@');
+}
+
+function toggleValueVisibility(elementId, btnEl, plainText) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const isHidden = el.dataset.hidden !== 'false';
+  if (isHidden) {
+    el.textContent = plainText;
+    el.dataset.hidden = 'false';
+    btnEl.title = "Hide Password";
+    btnEl.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+  } else {
+    el.textContent = '••••••••••••';
+    el.dataset.hidden = 'true';
+    btnEl.title = "Show Password";
+    btnEl.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  }
+}
+
+function toggleConnUriVisibility(elementId, btnEl, fullUri, password) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const isHidden = el.dataset.hidden !== 'false';
+  if (isHidden) {
+    el.textContent = fullUri;
+    el.dataset.hidden = 'false';
+    btnEl.title = "Hide URI Password";
+    btnEl.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+  } else {
+    el.textContent = getMaskedConnString(fullUri, password);
+    el.dataset.hidden = 'true';
+    btnEl.title = "Show URI Password";
+    btnEl.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
   }
 }
 
