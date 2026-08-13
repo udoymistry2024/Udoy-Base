@@ -27,7 +27,9 @@ pkill -f "node server.js" 2>/dev/null || true
 
 # Stop Docker container
 echo -e "${CYAN}📦 Stopping PostgreSQL Docker container...${RESET}"
-if command -v docker-compose &> /dev/null; then
+if docker compose version &> /dev/null; then
+    docker compose down 2>/dev/null || true
+elif command -v docker-compose &> /dev/null; then
     docker-compose down 2>/dev/null || true
 else
     docker compose down 2>/dev/null || true

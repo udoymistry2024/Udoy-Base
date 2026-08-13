@@ -70,7 +70,13 @@ chmod +x start.sh stop.sh install.sh
 
 # 6. Launch Docker Containers (PostgreSQL 15)
 echo -e "${CYAN}▶ Launching PostgreSQL 15 database container via Docker...${RESET}"
-docker compose up -d
+if docker compose version &> /dev/null; then
+    docker compose up -d
+elif command -v docker-compose &> /dev/null; then
+    docker-compose up -d
+else
+    docker compose up -d
+fi
 
 # 7. Start DataForge Platform
 echo -e "${CYAN}▶ Starting DataForge platform server...${RESET}"

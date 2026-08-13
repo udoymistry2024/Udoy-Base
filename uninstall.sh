@@ -34,7 +34,9 @@ pkill -f "node server.js" 2>/dev/null || true
 if [ -d "$INSTALL_DIR" ]; then
     cd "$INSTALL_DIR"
     echo -e "${CYAN}▶ Stopping and removing Docker PostgreSQL containers and volumes...${RESET}"
-    if command -v docker-compose &> /dev/null; then
+    if docker compose version &> /dev/null; then
+        docker compose down -v 2>/dev/null || true
+    elif command -v docker-compose &> /dev/null; then
         docker-compose down -v 2>/dev/null || true
     else
         docker compose down -v 2>/dev/null || true

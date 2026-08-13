@@ -18,7 +18,9 @@ echo -e "${RESET}"
 
 # 1. Start PostgreSQL container
 echo -e "${CYAN}📦 Starting PostgreSQL 15 container...${RESET}"
-if command -v docker-compose &> /dev/null; then
+if docker compose version &> /dev/null; then
+    docker compose up -d
+elif command -v docker-compose &> /dev/null; then
     docker-compose up -d
 else
     docker compose up -d
