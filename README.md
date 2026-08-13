@@ -23,7 +23,17 @@
 
 ---
 
-## 🚀 Quickstart Guide
+## ⚡ 1-Line Instant Automated Installation
+
+Run this single command on your Linux PC or VPS terminal to automatically clone, configure dependencies, start PostgreSQL in Docker, and launch DataForge:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/udoymistry/dataforge/main/install.sh | bash
+```
+
+---
+
+## 🚀 Manual Quickstart Guide
 
 ### Prerequisites
 
