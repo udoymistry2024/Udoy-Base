@@ -873,21 +873,24 @@ input, textarea, select,
 
 .data-grid .row-actions {
   display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity var(--transition);
+  align-items: center;
+  gap: 6px;
+  opacity: 1;
 }
 .data-grid tr:hover .row-actions { opacity: 1; }
 .data-grid .row-action-btn {
-  width: 24px; height: 24px;
-  border: none; background: transparent;
+  width: 26px; height: 26px;
+  border: 1px solid var(--border); background: var(--bg-elevated);
   border-radius: 4px; cursor: pointer;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
 }
-.data-grid .row-action-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
-.data-grid .row-action-btn.primary:hover { background: var(--brand-subtle); color: var(--brand); }
-.data-grid .row-action-btn.danger:hover { background: var(--red-subtle); color: var(--red); }
+.data-grid .row-action-btn:hover { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-hover); }
+.data-grid .row-action-btn.primary { color: var(--brand); }
+.data-grid .row-action-btn.primary:hover { background: var(--brand-subtle); color: var(--brand); border-color: var(--brand); }
+.data-grid .row-action-btn.danger { color: var(--red); }
+.data-grid .row-action-btn.danger:hover { background: var(--red-subtle); color: var(--red); border-color: var(--red); }
 
 .data-grid-footer {
   padding: 10px 16px;

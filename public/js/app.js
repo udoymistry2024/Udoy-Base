@@ -1086,30 +1086,22 @@ async function loadTableData(tableName) {
     pk = idCol ? idCol.column_name : cols[0].column_name;
   }
 
-  let headerHtml = '<tr>';
+  let headerHtml = '<tr><th style="width:70px;text-align:center">ACTIONS</th>';
   for (const col of cols) {
     headerHtml += `<th>${col.column_name}<span class="col-type">${col.data_type}</span></th>`;
   }
-  headerHtml += '<th style="width:80px;text-align:right">Actions</th></tr>';
+  headerHtml += '</tr>';
 
   let bodyHtml = '';
   if (data.rows.length === 0) {
     bodyHtml = `<tr><td colspan="${cols.length + 1}" style="text-align:center;padding:40px;color:var(--text-tertiary)">No rows yet. Click "Insert Row" to add data.</td></tr>`;
   } else {
     data.rows.forEach((row, idx) => {
-      bodyHtml += '<tr>';
-      for (const col of cols) {
-        const val = row[col.column_name];
-        if (val === null || val === undefined) {
-          bodyHtml += '<td><span class="null-value">NULL</span></td>';
-        } else {
-          bodyHtml += `<td>${escapeHtml(String(val))}</td>`;
-        }
-      }
       const pkVal = pk ? row[pk] : '';
+      bodyHtml += '<tr>';
       bodyHtml += `
-        <td>
-          <div class="row-actions" style="justify-content:flex-end">
+        <td style="width:70px;padding:6px 10px">
+          <div class="row-actions" style="justify-content:center">
             <button class="row-action-btn primary" title="Edit Row" onclick="showEditRowModal('${tableName}', ${idx})">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
@@ -1119,6 +1111,14 @@ async function loadTableData(tableName) {
           </div>
         </td>
       `;
+      for (const col of cols) {
+        const val = row[col.column_name];
+        if (val === null || val === undefined) {
+          bodyHtml += '<td><span class="null-value">NULL</span></td>';
+        } else {
+          bodyHtml += `<td>${escapeHtml(String(val))}</td>`;
+        }
+      }
       bodyHtml += '</tr>';
     });
   }
