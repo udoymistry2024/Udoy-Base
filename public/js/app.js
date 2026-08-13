@@ -1063,6 +1063,8 @@ async function selectTable(name) {
   loadTableData(name);
 }
 
+let currentTableRows = [];
+
 async function loadTableData(tableName) {
   const container = document.getElementById('dataGridContainer');
   container.innerHTML = '<div class="loading-screen"><div class="spinner"></div><span>Loading rows...</span></div>';
@@ -1075,20 +1077,26 @@ async function loadTableData(tableName) {
     return;
   }
 
+  currentTableRows = data.rows || [];
   const cols = tableInfo ? tableInfo.columns : [];
-  const pk = tableInfo ? tableInfo.primaryKey : null;
+  let pk = tableInfo ? tableInfo.primaryKey : null;
+
+  if (!pk && cols.length) {
+    const idCol = cols.find(c => c.column_name.toLowerCase() === 'id' || c.column_name.toLowerCase() === 'uuid');
+    pk = idCol ? idCol.column_name : cols[0].column_name;
+  }
 
   let headerHtml = '<tr>';
   for (const col of cols) {
     headerHtml += `<th>${col.column_name}<span class="col-type">${col.data_type}</span></th>`;
   }
-  headerHtml += '<th style="width:60px"></th></tr>';
+  headerHtml += '<th style="width:80px;text-align:right">Actions</th></tr>';
 
   let bodyHtml = '';
   if (data.rows.length === 0) {
     bodyHtml = `<tr><td colspan="${cols.length + 1}" style="text-align:center;padding:40px;color:var(--text-tertiary)">No rows yet. Click "Insert Row" to add data.</td></tr>`;
   } else {
-    for (const row of data.rows) {
+    data.rows.forEach((row, idx) => {
       bodyHtml += '<tr>';
       for (const col of cols) {
         const val = row[col.column_name];
@@ -1098,17 +1106,21 @@ async function loadTableData(tableName) {
           bodyHtml += `<td>${escapeHtml(String(val))}</td>`;
         }
       }
+      const pkVal = pk ? row[pk] : '';
       bodyHtml += `
         <td>
-          <div class="row-actions">
-            <button class="row-action-btn danger" title="Delete row" onclick="deleteRow('${tableName}','${pk}','${row[pk]}')">
-              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          <div class="row-actions" style="justify-content:flex-end">
+            <button class="row-action-btn primary" title="Edit Row" onclick="showEditRowModal('${tableName}', ${idx})">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="row-action-btn danger" title="Delete Row" onclick="deleteRow('${tableName}','${pk}','${escapeHtml(String(pkVal))}')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
             </button>
           </div>
         </td>
       `;
       bodyHtml += '</tr>';
-    }
+    });
   }
 
   container.innerHTML = `
@@ -1136,55 +1148,75 @@ async function loadTableData(tableName) {
   `;
 }
 
-// ====================================================================
-// Insert Row Modal
-// ====================================================================
-
-function showInsertRowModal(tableName) {
+function showEditRowModal(tableName, rowIndex) {
   const tableInfo = projectTables.find(t => t.name === tableName);
-  if (!tableInfo) return;
+  const rowData = currentTableRows[rowIndex];
+  if (!tableInfo || !rowData) return;
+
+  let pk = tableInfo.primaryKey;
+  if (!pk && tableInfo.columns.length) {
+    const idCol = tableInfo.columns.find(c => c.column_name.toLowerCase() === 'id' || c.column_name.toLowerCase() === 'uuid');
+    pk = idCol ? idCol.column_name : tableInfo.columns[0].column_name;
+  }
+
+  const pkValue = rowData[pk];
 
   let fieldsHtml = '';
   for (const col of tableInfo.columns) {
-    // Skip auto-generated columns
-    const isAuto = col.column_default && (col.column_default.includes('nextval') || col.column_default.includes('uuid_generate'));
+    const isPk = (col.column_name === pk);
+    const val = rowData[col.column_name] !== null && rowData[col.column_name] !== undefined ? rowData[col.column_name] : '';
     fieldsHtml += `
-      <label>${col.column_name} <span class="text-muted text-sm">(${col.data_type}${isAuto ? ', auto' : ''})</span></label>
-      <input type="text" class="insert-field" data-col="${col.column_name}" data-auto="${isAuto}" placeholder="${isAuto ? 'auto-generated' : ''}" ${isAuto ? 'disabled' : ''}>
+      <div class="auth-form-group" style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:4px">
+          ${col.column_name} <span class="text-muted text-sm">(${col.data_type}${isPk ? ', Primary Identifier' : ''})</span>
+        </label>
+        <input type="text" class="edit-row-field" data-col="${col.column_name}" value="${escapeHtml(String(val))}" ${isPk ? 'disabled style="opacity:0.6;cursor:not-allowed"' : ''}>
+      </div>
     `;
   }
 
   showModal(`
-    <h2>Insert row into ${tableName}</h2>
-    <p class="modal-desc">Fill in the values for the new row. Auto-generated fields are skipped.</p>
-    ${fieldsHtml}
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="insertRow('${tableName}')">Insert</button>
+    <div style="padding:4px">
+      <h2 style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:6px;display:flex;align-items:center;gap:10px">
+        <svg width="20" height="20" fill="none" stroke="var(--brand)" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Row in ${tableName}
+      </h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px">Modify values for this record (${pk} = ${escapeHtml(String(pkValue))}).</p>
+      
+      <div style="max-height:360px;overflow-y:auto;padding-right:4px">
+        ${fieldsHtml}
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveEditedRow('${tableName}', '${pk}', '${escapeHtml(String(pkValue))}')">Save Changes</button>
+      </div>
     </div>
   `);
 }
 
-async function insertRow(tableName) {
-  const fields = document.querySelectorAll('.insert-field');
-  const data = {};
+async function saveEditedRow(tableName, pkCol, pkVal) {
+  const fields = document.querySelectorAll('.edit-row-field');
+  const updatedData = {};
   fields.forEach(f => {
-    if (f.dataset.auto === 'true' || !f.value.trim()) return;
-    data[f.dataset.col] = f.value.trim();
+    if (!f.disabled) {
+      updatedData[f.dataset.col] = f.value;
+    }
   });
 
-  if (!Object.keys(data).length) { showToast('error', 'Please fill in at least one field'); return; }
-
+  showToast('info', 'Updating row...');
   const result = await api(`/api/projects/${currentProject}/tables/${tableName}/rows`, {
-    method: 'POST', body: data,
+    method: 'PUT',
+    body: { column: pkCol, value: pkVal, data: updatedData }
   });
-  closeModal();
+
   if (result.success) {
-    showToast('success', 'Row inserted successfully');
+    showToast('success', 'Row updated successfully!');
+    closeModal();
     await refreshTables();
     loadTableData(tableName);
   } else {
-    showToast('error', result.message);
+    showToast('error', result.message || 'Failed to update row');
   }
 }
 
@@ -1194,11 +1226,16 @@ async function insertRow(tableName) {
 
 async function deleteRow(tableName, pkCol, pkVal) {
   showModal(`
-    <h2>Delete row</h2>
-    <p class="modal-desc">Are you sure you want to delete the row where <strong>${pkCol} = ${pkVal}</strong>?</p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="confirmDeleteRow('${tableName}','${pkCol}','${pkVal}')">Delete</button>
+    <div style="padding:4px">
+      <h2 style="font-size:18px;font-weight:700;color:var(--red);margin-bottom:6px;display:flex;align-items:center;gap:10px">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        Delete Row
+      </h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px">Are you sure you want to permanently delete this row where <strong>${pkCol} = ${escapeHtml(String(pkVal))}</strong>?</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-danger" style="flex:1;justify-content:center;background:var(--red);color:#fff" onclick="confirmDeleteRow('${tableName}','${pkCol}','${escapeHtml(String(pkVal))}')">Delete Row</button>
+      </div>
     </div>
   `);
 }
@@ -1209,11 +1246,11 @@ async function confirmDeleteRow(tableName, pkCol, pkVal) {
   });
   closeModal();
   if (result.success) {
-    showToast('success', 'Row deleted');
+    showToast('success', 'Row deleted successfully!');
     await refreshTables();
     loadTableData(tableName);
   } else {
-    showToast('error', result.message);
+    showToast('error', result.message || 'Failed to delete row');
   }
 }
 

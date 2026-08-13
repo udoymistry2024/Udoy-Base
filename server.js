@@ -604,6 +604,30 @@ app.post('/api/projects/:name/tables/:table/rows', async (req, res) => {
   }
 });
 
+app.put('/api/projects/:name/tables/:table/rows', async (req, res) => {
+  const { column, value, data } = req.body;
+  if (!column || value === undefined || !data || !Object.keys(data).length) {
+    return res.status(400).json({ success: false, message: 'column, value, and data object required' });
+  }
+  const keys = Object.keys(data);
+  const setClauses = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+  const vals = keys.map(k => data[k]);
+  vals.push(value);
+
+  try {
+    const c = await getProjectClient(req.params.name);
+    const q = `UPDATE "${req.params.table}" SET ${setClauses} WHERE "${column}" = $${vals.length} RETURNING *`;
+    const r = await c.query(q, vals);
+    await c.end();
+    if (!r.rows.length) {
+      return res.status(404).json({ success: false, message: 'Row not found or no changes made' });
+    }
+    res.json({ success: true, row: r.rows[0] });
+  } catch (e) {
+    res.status(400).json({ success: false, message: e.message });
+  }
+});
+
 app.delete('/api/projects/:name/tables/:table/rows', async (req, res) => {
   const { column, value } = req.body;
   if (!column || value === undefined) return res.status(400).json({ success: false, message: 'column and value required' });

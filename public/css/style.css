@@ -886,6 +886,7 @@ input, textarea, select,
   display: flex; align-items: center; justify-content: center;
 }
 .data-grid .row-action-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.data-grid .row-action-btn.primary:hover { background: var(--brand-subtle); color: var(--brand); }
 .data-grid .row-action-btn.danger:hover { background: var(--red-subtle); color: var(--red); }
 
 .data-grid-footer {
