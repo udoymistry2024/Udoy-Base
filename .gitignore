@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment & Local Configuration
+.env
+.env.local
+.env.production
+
+# Process & Runtime Logs
+.dataforge.pid
+*.log
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Temporary Data & Backups
+*.sql
