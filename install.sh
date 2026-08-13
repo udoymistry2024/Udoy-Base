@@ -3,7 +3,7 @@
 # ====================================================================
 # DataForge — 1-Line Automated Installer & Setup Script
 # Works on Linux (Ubuntu/Debian/Arch/Fedora) and macOS
-# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry/dataforge/main/install.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/install.sh | bash
 # ====================================================================
 
 set -e
@@ -51,7 +51,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git pull origin main
 else
     echo -e "${CYAN}▶ Cloning DataForge repository into $INSTALL_DIR...${RESET}"
-    git clone https://github.com/udoymistry/dataforge.git "$INSTALL_DIR"
+    git clone https://github.com/udoymistry2024/DataForge.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
 fi
 

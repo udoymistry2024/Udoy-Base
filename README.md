@@ -28,7 +28,7 @@
 Run this single command on your Linux PC or VPS terminal to automatically clone, configure dependencies, start PostgreSQL in Docker, and launch DataForge:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/udoymistry/dataforge/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/install.sh | bash
 ```
 
 ---
@@ -43,8 +43,8 @@ curl -sSL https://raw.githubusercontent.com/udoymistry/dataforge/main/install.sh
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/dataforge.git
-cd dataforge
+git clone https://github.com/udoymistry2024/DataForge.git
+cd DataForge
 ```
 
 ### 2. Environment Configuration
