@@ -33,6 +33,30 @@ curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/instal
 
 ---
 
+## 🗑️ Uninstallation & Complete Cleanup
+
+If you ever need to completely remove DataForge, stop background services, and purge database containers/volumes:
+
+### 1-Line Instant Automated Uninstall
+
+Run this single command in your Linux PC or VPS terminal to purge DataForge completely:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/uninstall.sh | bash
+```
+
+### Manual Uninstall
+
+If you installed DataForge manually or prefer step-by-step cleanup:
+
+```bash
+./stop.sh
+docker compose down -v
+rm -rf ~/dataforge
+```
+
+---
+
 ## 🚀 Manual Quickstart Guide
 
 ### Prerequisites
