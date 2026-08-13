@@ -2380,47 +2380,35 @@ function handleLogout() {
 function showChangePasswordModal() {
   if (!projectInfo) return;
   const currentPass = projectInfo.password;
-  const modalHtml = `
-    <div class="modal-overlay active" id="changePasswordModal">
-      <div class="modal-card" style="max-width:440px">
-        <div class="modal-header">
-          <h3>Change Database Password</h3>
-          <button class="modal-close" onclick="closeCustomModal('changePasswordModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p class="text-sm text-muted mb-3">Update the PostgreSQL password for user <strong>${projectInfo.user}</strong> on project <strong>${projectInfo.name}</strong>.</p>
-          <div class="form-group mb-3">
-            <label class="form-label">New Password</label>
-            <input type="text" id="newDbPasswordInput" class="form-control" value="${currentPass}" placeholder="Enter new password">
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button class="btn btn-secondary" onclick="closeCustomModal('changePasswordModal')">Cancel</button>
-            <button class="btn btn-primary" onclick="saveNewPassword()">Save New Password</button>
-          </div>
-        </div>
-      </div>
+  showModal(`
+    <h2>Change Database Password</h2>
+    <p class="modal-desc">
+      Update the PostgreSQL password for user <strong>${projectInfo.user}</strong> on project <strong>${projectInfo.name}</strong>.
+    </p>
+    <label>New Database Password</label>
+    <input type="text" id="newDbPasswordInput" value="${currentPass}" placeholder="Enter new password" onkeydown="if(event.key==='Enter')saveNewPassword()">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewPassword()">Save New Password</button>
     </div>
-  `;
-  const existing = document.getElementById('changePasswordModal');
-  if (existing) existing.remove();
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
-function closeCustomModal(modalId) {
-  const el = document.getElementById(modalId);
-  if (el) el.remove();
+  `);
 }
 
 async function saveNewPassword() {
-  const newPass = document.getElementById('newDbPasswordInput').value.trim();
+  const inputEl = document.getElementById('newDbPasswordInput');
+  if (!inputEl) return;
+  const newPass = inputEl.value.trim();
   if (!newPass) {
     showToast('error', 'Password cannot be empty');
     return;
   }
-  const res = await api(`/api/projects/${currentProject}/credentials`, 'PUT', { password: newPass });
+  const res = await api(`/api/projects/${currentProject}/credentials`, {
+    method: 'PUT',
+    body: { password: newPass }
+  });
   if (res.success) {
     showToast('success', 'Database password updated successfully!');
-    closeCustomModal('changePasswordModal');
+    closeModal();
     loadProjectInfo(currentProject);
   } else {
     showToast('error', res.message || 'Failed to update password');
