@@ -27,6 +27,15 @@ const SYSTEM_DBS = ['postgres', 'template0', 'template1'];
 
 // --- Helpers ---
 
+function generateRandomPassword(length = 16) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let pass = '';
+  for (let i = 0; i < length; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return 'df_' + pass;
+}
+
 function generateJwtKeys(projectName) {
   const anonPayload = {
     iss: 'dataforge', ref: projectName, role: 'anon',
@@ -40,14 +49,62 @@ function generateJwtKeys(projectName) {
   };
 }
 
-function connString(dbName) {
-  return `postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${dbName}`;
+function connString(dbName, user = DB_USER, pass = DB_PASS) {
+  return `postgresql://${user}:${pass}@${DB_HOST}:${DB_PORT}/${dbName}`;
 }
 
 async function getProjectClient(dbName) {
   const client = new Client({ host: DB_HOST, port: DB_PORT, user: DB_USER, password: DB_PASS, database: dbName });
   await client.connect();
   return client;
+}
+
+async function getProjectCredentials(dbName) {
+  try {
+    const res = await masterPool.query('SELECT db_user, db_password FROM _dataforge_project_credentials WHERE project_name = $1', [dbName]);
+    if (res.rows.length > 0) {
+      return { dbUser: res.rows[0].db_user, dbPassword: res.rows[0].db_password };
+    }
+
+    // Auto-migrate legacy or missing project
+    const dbUser = `${dbName}_user`;
+    const dbPassword = generateRandomPassword();
+
+    await masterPool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${dbUser}') THEN
+          CREATE ROLE "${dbUser}" WITH LOGIN PASSWORD '${dbPassword}';
+        ELSE
+          ALTER ROLE "${dbUser}" WITH LOGIN PASSWORD '${dbPassword}';
+        END IF;
+      END
+      $$;
+    `);
+    await masterPool.query(`GRANT ALL PRIVILEGES ON DATABASE "${dbName}" TO "${dbUser}"`);
+
+    try {
+      const c = await getProjectClient(dbName);
+      await c.query(`GRANT ALL ON SCHEMA public TO "${dbUser}"`);
+      await c.query(`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${dbUser}"`);
+      await c.query(`GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${dbUser}"`);
+      await c.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "${dbUser}"`);
+      await c.end();
+    } catch(err) {
+      console.error('Error setting public schema grants for role:', err.message);
+    }
+
+    await masterPool.query(
+      `INSERT INTO _dataforge_project_credentials (project_name, db_user, db_password) VALUES ($1, $2, $3)
+       ON CONFLICT (project_name) DO UPDATE SET db_user = $2, db_password = $3, updated_at = NOW()`,
+      [dbName, dbUser, dbPassword]
+    );
+
+    return { dbUser, dbPassword };
+  } catch (e) {
+    console.error('Failed to get/create project credentials:', e.message);
+    return { dbUser: DB_USER, dbPassword: DB_PASS };
+  }
 }
 
 // ====================================================================
@@ -69,6 +126,14 @@ async function initAuthDb() {
         telegram_bot_token TEXT NOT NULL,
         avatar_url TEXT DEFAULT '/images/developer.jpg',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS _dataforge_project_credentials (
+        project_name TEXT PRIMARY KEY,
+        db_user TEXT NOT NULL,
+        db_password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
   } catch (e) {
@@ -450,9 +515,37 @@ app.post('/api/projects', async (req, res) => {
 
     await masterPool.query(`CREATE DATABASE "${rawName}"`);
 
-    // Initialize extensions
+    // Create unique role and password for this project
+    const dbUser = `${rawName}_user`;
+    const dbPassword = generateRandomPassword();
+
+    await masterPool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${dbUser}') THEN
+          CREATE ROLE "${dbUser}" WITH LOGIN PASSWORD '${dbPassword}';
+        ELSE
+          ALTER ROLE "${dbUser}" WITH LOGIN PASSWORD '${dbPassword}';
+        END IF;
+      END
+      $$;
+    `);
+    await masterPool.query(`GRANT ALL PRIVILEGES ON DATABASE "${rawName}" TO "${dbUser}"`);
+
+    // Save in _dataforge_project_credentials
+    await masterPool.query(
+      `INSERT INTO _dataforge_project_credentials (project_name, db_user, db_password) VALUES ($1, $2, $3)
+       ON CONFLICT (project_name) DO UPDATE SET db_user = $2, db_password = $3, updated_at = NOW()`,
+      [rawName, dbUser, dbPassword]
+    );
+
+    // Initialize extensions and schema grants
     const c = await getProjectClient(rawName);
     await c.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
+    await c.query(`GRANT ALL ON SCHEMA public TO "${dbUser}"`);
+    await c.query(`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${dbUser}"`);
+    await c.query(`GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${dbUser}"`);
+    await c.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "${dbUser}"`);
     await c.end();
 
     const keys = generateJwtKeys(rawName);
@@ -460,9 +553,10 @@ app.post('/api/projects', async (req, res) => {
       success: true,
       project: {
         name: rawName, size: '0 bytes', tableCount: 0,
-        connectionString: connString(rawName),
+        connectionString: connString(rawName, dbUser, dbPassword),
         anonKey: keys.anonKey, serviceRoleKey: keys.serviceRoleKey,
         apiUrl: `http://${DB_HOST}:${PORT}`,
+        user: dbUser, password: dbPassword
       },
     });
   } catch (e) {
@@ -474,8 +568,18 @@ app.delete('/api/projects/:name', async (req, res) => {
   const dbName = req.params.name;
   if (SYSTEM_DBS.includes(dbName)) return res.status(400).json({ success: false, message: 'Cannot delete system db' });
   try {
+    const creds = await getProjectCredentials(dbName);
     await masterPool.query(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND pid<>pg_backend_pid()`, [dbName]);
     await masterPool.query(`DROP DATABASE IF EXISTS "${dbName}"`);
+
+    // Drop dedicated PG role if exists
+    if (creds.dbUser && creds.dbUser !== DB_USER) {
+      await masterPool.query(`DROP ROLE IF EXISTS "${creds.dbUser}"`);
+    }
+
+    // Clean metadata
+    await masterPool.query(`DELETE FROM _dataforge_project_credentials WHERE project_name = $1`, [dbName]);
+
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
@@ -489,16 +593,51 @@ app.get('/api/projects/:name/info', async (req, res) => {
     const c = await getProjectClient(dbName);
     const tblR = await c.query("SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'");
     await c.end();
+
+    const creds = await getProjectCredentials(dbName);
     const keys = generateJwtKeys(dbName);
     res.json({
       success: true,
       info: {
         name: dbName, size: sizeR.rows[0].size,
         tableCount: parseInt(tblR.rows[0].count, 10),
-        connectionString: connString(dbName),
+        connectionString: connString(dbName, creds.dbUser, creds.dbPassword),
         anonKey: keys.anonKey, serviceRoleKey: keys.serviceRoleKey,
-        host: DB_HOST, port: DB_PORT, user: DB_USER, password: DB_PASS,
+        host: DB_HOST, port: DB_PORT, user: creds.dbUser, password: creds.dbPassword,
       },
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+app.put('/api/projects/:name/credentials', async (req, res) => {
+  const dbName = req.params.name;
+  const { password } = req.body;
+  if (!password || password.trim().length < 4) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 4 characters long' });
+  }
+
+  try {
+    const creds = await getProjectCredentials(dbName);
+    const dbUser = creds.dbUser;
+    const newPass = password.trim();
+
+    // Update PostgreSQL role password
+    await masterPool.query(`ALTER ROLE "${dbUser}" WITH PASSWORD '${newPass.replace(/'/g, "''")}'`);
+
+    // Update metadata table
+    await masterPool.query(
+      `UPDATE _dataforge_project_credentials SET db_password = $1, updated_at = NOW() WHERE project_name = $2`,
+      [newPass, dbName]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully!',
+      user: dbUser,
+      password: newPass,
+      connectionString: connString(dbName, dbUser, newPass)
     });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

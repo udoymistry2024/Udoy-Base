@@ -1594,7 +1594,13 @@ function renderSettingsView() {
         </div>
 
         <div class="settings-section">
-          <h3>Connection Details</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <h3 style="margin:0">Connection Details</h3>
+            <button class="btn btn-secondary btn-sm" onclick="showChangePasswordModal()" style="display:flex;align-items:center;gap:6px">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Change Password
+            </button>
+          </div>
           <div class="connection-card">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div>
@@ -1606,12 +1612,22 @@ function renderSettingsView() {
                 <div class="copy-field"><span class="field-value">${p.port}</span></div>
               </div>
               <div>
-                <div class="conn-label">User</div>
-                <div class="copy-field"><span class="field-value">${p.user}</span></div>
+                <div class="conn-label">User (Dedicated Role)</div>
+                <div class="copy-field">
+                  <span class="field-value">${p.user}</span>
+                  <button class="copy-btn" onclick="copyToClipboard('${p.user}')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
               </div>
               <div>
                 <div class="conn-label">Password</div>
-                <div class="copy-field"><span class="field-value">${p.password}</span></div>
+                <div class="copy-field">
+                  <span class="field-value">${p.password}</span>
+                  <button class="copy-btn" onclick="copyToClipboard('${p.password}')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2359,6 +2375,56 @@ function handleLogout() {
   currentUser = null;
   showToast('success', 'Logged out successfully');
   checkAuthStatus();
+}
+
+function showChangePasswordModal() {
+  if (!projectInfo) return;
+  const currentPass = projectInfo.password;
+  const modalHtml = `
+    <div class="modal-overlay active" id="changePasswordModal">
+      <div class="modal-card" style="max-width:440px">
+        <div class="modal-header">
+          <h3>Change Database Password</h3>
+          <button class="modal-close" onclick="closeCustomModal('changePasswordModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="text-sm text-muted mb-3">Update the PostgreSQL password for user <strong>${projectInfo.user}</strong> on project <strong>${projectInfo.name}</strong>.</p>
+          <div class="form-group mb-3">
+            <label class="form-label">New Password</label>
+            <input type="text" id="newDbPasswordInput" class="form-control" value="${currentPass}" placeholder="Enter new password">
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-secondary" onclick="closeCustomModal('changePasswordModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveNewPassword()">Save New Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  const existing = document.getElementById('changePasswordModal');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeCustomModal(modalId) {
+  const el = document.getElementById(modalId);
+  if (el) el.remove();
+}
+
+async function saveNewPassword() {
+  const newPass = document.getElementById('newDbPasswordInput').value.trim();
+  if (!newPass) {
+    showToast('error', 'Password cannot be empty');
+    return;
+  }
+  const res = await api(`/api/projects/${currentProject}/credentials`, 'PUT', { password: newPass });
+  if (res.success) {
+    showToast('success', 'Database password updated successfully!');
+    closeCustomModal('changePasswordModal');
+    loadProjectInfo(currentProject);
+  } else {
+    showToast('error', res.message || 'Failed to update password');
+  }
 }
 
 // ====================================================================
