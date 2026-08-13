@@ -99,7 +99,8 @@ function handleRoute() {
     if (projIcon) projIcon.classList.add('active');
     const projectName = parts[1];
     const section = parts[2] || 'dashboard';
-    openProjectRoute(projectName, section);
+    const subParam = parts[3] || null;
+    openProjectRoute(projectName, section, subParam);
   } else {
     const projIcon = document.querySelector('.icon-sidebar .nav-icon[data-nav="projects"]');
     if (projIcon) projIcon.classList.add('active');
@@ -128,10 +129,14 @@ function goHome() {
 }
 
 function switchSection(el) {
-  const section = el.dataset ? el.dataset.section : el;
   closeMobileSidebar();
+  const section = typeof el === 'string' ? el : (el.dataset ? el.dataset.section : el);
   if (currentProject) {
-    location.hash = `#/project/${currentProject}/${section}`;
+    let newHash = `#/project/${currentProject}/${section}`;
+    if ((section === 'table-editor' || section === 'tables') && selectedTable) {
+      newHash += `/${selectedTable}`;
+    }
+    location.hash = newHash;
   }
 }
 
@@ -175,7 +180,7 @@ function openProjectsListRoute() {
   loadProjects();
 }
 
-async function openProjectRoute(projectName, section = 'dashboard') {
+async function openProjectRoute(projectName, section = 'dashboard', subParam = null) {
   const isSameProject = (currentProject === projectName);
   currentProject = projectName;
   updateMobileNavButtons(true);
@@ -185,10 +190,17 @@ async function openProjectRoute(projectName, section = 'dashboard') {
   document.getElementById('dashboardLayout').style.display = '';
   document.getElementById('dashProjectName').textContent = projectName;
 
+  // Normalize section aliases (e.g. 'tables' -> 'table-editor', 'sql' -> 'sql-editor')
+  let activeSection = section;
+  if (section === 'tables') activeSection = 'table-editor';
+  if (section === 'sql') activeSection = 'sql-editor';
+
   // Highlight active sidebar item
-  document.querySelectorAll('#dashboardLayout .sidebar-item').forEach(i => i.classList.remove('active'));
-  const activeItem = document.querySelector(`#dashboardLayout [data-section="${section}"]`);
-  if (activeItem) activeItem.classList.add('active');
+  document.querySelectorAll('#dashboardLayout .sidebar-item').forEach(i => {
+    const sec = i.dataset.section;
+    const isActive = (sec === activeSection || sec === section);
+    i.classList.toggle('active', isActive);
+  });
 
   // Load project info & tables if entering a new project or not cached
   if (!isSameProject || !projectInfo) {
@@ -199,20 +211,26 @@ async function openProjectRoute(projectName, section = 'dashboard') {
     if (!infoData.success) {
       showToast('error', `Project "${currentProject}" does not exist.`);
       location.hash = '#/projects';
-      openProjectsLandingRoute();
+      openProjectsListRoute();
       return;
     }
     projectInfo = infoData.info;
     projectTables = tablesData.success ? tablesData.tables : [];
-    selectedTable = projectTables.length ? projectTables[0].name : null;
+    if (subParam) {
+      selectedTable = subParam;
+    } else if (projectTables.length && !selectedTable) {
+      selectedTable = projectTables[0].name;
+    }
+  } else if (subParam) {
+    selectedTable = subParam;
   }
 
   // Render requested section
-  if (section === 'dashboard') renderDashboardView();
-  else if (section === 'table-editor') renderTableEditor();
-  else if (section === 'sql-editor') renderSqlEditor();
-  else if (section === 'database') renderDatabaseView();
-  else if (section === 'settings') renderSettingsView();
+  if (activeSection === 'dashboard') renderDashboardView();
+  else if (activeSection === 'table-editor') renderTableEditor();
+  else if (activeSection === 'sql-editor') renderSqlEditor();
+  else if (activeSection === 'database') renderDatabaseView();
+  else if (activeSection === 'settings') renderSettingsView();
 }
 
 function openDocsRoute(topic = 'quickstart') {
@@ -826,19 +844,8 @@ async function loadProjectDashboard() {
 }
 
 // ====================================================================
-// Section Switching
+// Section Switching & Routing Handled Above
 // ====================================================================
-
-function switchSection(el) {
-  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-  el.classList.add('active');
-  const section = el.dataset.section;
-  if (section === 'dashboard') renderDashboardView();
-  else if (section === 'table-editor') renderTableEditor();
-  else if (section === 'sql-editor') renderSqlEditor();
-  else if (section === 'database') renderDatabaseView();
-  else if (section === 'settings') renderSettingsView();
-}
 
 // ====================================================================
 // Dashboard View (Overview & Quick API Credentials)
@@ -1056,6 +1063,9 @@ function renderTableEditor() {
 
 async function selectTable(name) {
   selectedTable = name;
+  if (currentProject) {
+    history.replaceState(null, '', `#/project/${currentProject}/table-editor/${name}`);
+  }
   // Update active state in sidebar
   document.querySelectorAll('.table-list-item').forEach(el => {
     el.classList.toggle('active', el.textContent.trim().startsWith(name));
