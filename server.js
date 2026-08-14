@@ -821,6 +821,9 @@ app.get('/api/projects/:name/export', (req, res) => {
     if (err) {
       return res.status(500).json({ success: false, message: stderr || err.message });
     }
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.setHeader('Content-Type', 'application/sql');
     res.setHeader('Content-Disposition', `attachment; filename="${proj}_backup.sql"`);
     res.send(stdout);
