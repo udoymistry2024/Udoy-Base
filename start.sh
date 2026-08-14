@@ -45,7 +45,7 @@ fi
 
 # 3. Launch Node.js server detached in the background
 echo -e "${CYAN}🚀 Launching Udoy Base server in background...${RESET}"
-nohup node server.js > udoybase.log 2>&1 &
+nohup node server.js > udoybase.log 2>&1 & disown %1 2>/dev/null || nohup node server.js > udoybase.log 2>&1 &
 SERVER_PID=$!
 echo $SERVER_PID > .udoybase.pid
 

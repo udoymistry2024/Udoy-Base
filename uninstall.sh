@@ -3,7 +3,7 @@
 # ====================================================================
 # Udoy Base — 1-Line Automated Uninstaller & Cleanup Script
 # Works on Linux and macOS
-# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/uninstall.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/UdoyBase/main/uninstall.sh | bash
 # ====================================================================
 
 BOLD='\033[1m'
@@ -60,5 +60,5 @@ echo -e "• Docker database containers and volume 'udoybase-pg-data' removed."
 echo -e "• Installation directory '$INSTALL_DIR' removed."
 echo -e "-----------------------------------------------------------------"
 echo -e "To reinstall Udoy Base anytime, run:"
-echo -e "  curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/install.sh | bash"
+echo -e "  curl -sSL https://raw.githubusercontent.com/udoymistry2024/UdoyBase/main/install.sh | bash"
 echo -e "=================================================================\n"

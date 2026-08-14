@@ -25,10 +25,37 @@
 
 ## ⚡ 1-Line Instant Automated Installation
 
-Run this single command on your Linux PC or VPS terminal to automatically clone, configure dependencies, start PostgreSQL in Docker, and launch Udoy Base:
+Run this single command on your Linux PC or VPS terminal. It will **automatically detect and install** all missing dependencies (Git, Node.js, npm, Docker, Docker Compose) before setting up Udoy Base:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/UdoyBase/main/install.sh | bash
+```
+
+### What the installer does automatically:
+1. ✅ Detects your OS (Ubuntu, Debian, Fedora, CentOS, Arch, macOS)
+2. ✅ Checks for Git, Node.js (v18+), npm, Docker, Docker Compose
+3. ✅ Auto-installs any missing dependency
+4. ✅ Clones the repository to `~/udoybase`
+5. ✅ Sets up environment variables (`.env`)
+6. ✅ Installs Node.js packages
+7. ✅ Launches PostgreSQL 15 inside Docker
+8. ✅ Starts the Udoy Base web server on `http://localhost:4000`
+
+---
+
+## 🟢 Start & Stop Commands
+
+After installation, use these commands from the `~/udoybase` directory:
+
+```bash
+# Start the platform (PostgreSQL + Web Server)
+./start.sh
+
+# Stop the platform gracefully
+./stop.sh
+
+# View live server logs
+tail -f udoybase.log
 ```
 
 ---
@@ -39,15 +66,11 @@ If you ever need to completely remove Udoy Base, stop background services, and p
 
 ### 1-Line Instant Automated Uninstall
 
-Run this single command in your Linux PC or VPS terminal to purge Udoy Base completely:
-
 ```bash
-curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/uninstall.sh | bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/UdoyBase/main/uninstall.sh | bash
 ```
 
 ### Manual Uninstall
-
-If you installed Udoy Base manually or prefer step-by-step cleanup:
 
 ```bash
 ./stop.sh
@@ -67,8 +90,8 @@ rm -rf ~/udoybase
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/udoymistry2024/Udoy Base.git
-cd Udoy Base
+git clone https://github.com/udoymistry2024/UdoyBase.git
+cd UdoyBase
 ```
 
 ### 2. Environment Configuration
@@ -81,17 +104,17 @@ cp .env.example .env
 
 Default `.env` configuration:
 ```env
-PORT=4000
-JWT_SECRET=udoybase-jwt-secret-key-must-be-at-least-32-chars-long
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=udoybase_secure_2026
+PLATFORM_PORT=4000
+PLATFORM_NAME=Udoy Base
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=udoybase_secure_2026
+POSTGRES_DB=postgres
+JWT_SECRET=udoybase-jwt-secret-key-must-be-at-least-32-chars-long
 ```
 
 ### 3. One-Click Automated Launch
-
-Run the automated startup script:
 
 ```bash
 chmod +x start.sh stop.sh
@@ -129,7 +152,7 @@ Udoy Base provides direct PostgreSQL connection strings and API credentials for 
 
 ### Connection String Format
 ```
-postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project
+postgresql://your_project_user:your_password@localhost:5432/your_project
 ```
 
 ### Node.js Integration (`pg`)
@@ -137,7 +160,7 @@ postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: 'postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project'
+  connectionString: 'postgresql://your_project_user:your_password@localhost:5432/your_project'
 });
 
 const { rows } = await pool.query('SELECT * FROM users');
@@ -148,7 +171,7 @@ console.log(rows);
 ```python
 import psycopg2
 
-conn = psycopg2.connect("postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project")
+conn = psycopg2.connect("postgresql://your_project_user:your_password@localhost:5432/your_project")
 cur = conn.cursor()
 cur.execute("SELECT * FROM users")
 print(cur.fetchall())
@@ -182,8 +205,8 @@ All requests must include `Authorization: Bearer <ADMIN_JWT_TOKEN>` header (exce
 ## 🧑‍💻 Developer Profile
 
 **Udoy Mistry (উদয় মিস্ত্রি)**  
-*Machine Learning & Deep Learning Engineer (ML/DL)*  
-- **GitHub**: [github.com/udoymistry](https://github.com/udoymistry)
+*Machine Learning & Deep Learning Engineer (ML/DL) • Creator of Udoy Base*  
+- **GitHub**: [github.com/udoymistry2024](https://github.com/udoymistry2024)
 - **Specialization**: Artificial Intelligence, Deep Learning & Database Architecture
 
 ---
