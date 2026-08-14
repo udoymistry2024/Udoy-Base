@@ -28,7 +28,7 @@
 Run this single command on your Linux PC or VPS terminal. It will **automatically detect and install** all missing dependencies (Git, Node.js, npm, Docker, Docker Compose) before setting up Udoy Base:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/udoymistry2024/UdoyBase/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy-Base/main/install.sh | bash
 ```
 
 ### What the installer does automatically:
@@ -67,7 +67,7 @@ If you ever need to completely remove Udoy Base, stop background services, and p
 ### 1-Line Instant Automated Uninstall
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/udoymistry2024/UdoyBase/main/uninstall.sh | bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy-Base/main/uninstall.sh | bash
 ```
 
 ### Manual Uninstall
@@ -90,7 +90,7 @@ rm -rf ~/udoybase
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/udoymistry2024/UdoyBase.git
+git clone https://github.com/udoymistry2024/Udoy-Base.git
 cd UdoyBase
 ```
 

@@ -3,7 +3,7 @@
 # ====================================================================
 # Udoy Base — 1-Line Automated Installer & Setup Script
 # Works on Linux (Ubuntu/Debian/Arch/Fedora/CentOS) and macOS
-# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/UdoyBase/main/install.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy-Base/main/install.sh | bash
 # ====================================================================
 
 set -e
@@ -172,7 +172,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git pull origin main
 else
     echo -e "${CYAN}▶ Cloning Udoy Base repository into $INSTALL_DIR...${RESET}"
-    git clone https://github.com/udoymistry2024/UdoyBase.git "$INSTALL_DIR"
+    git clone https://github.com/udoymistry2024/Udoy-Base.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
 fi
 
