@@ -828,16 +828,37 @@ app.get('/api/projects/:name/export', (req, res) => {
 });
 
 app.post('/api/projects/:name/import', async (req, res) => {
+  const proj = req.params.name.replace(/[^a-zA-Z0-9_]/g, '');
   const { sql } = req.body;
   if (!sql) return res.status(400).json({ success: false, message: 'SQL content required' });
-  try {
-    const c = await getProjectClient(req.params.name);
-    await c.query(sql);
-    await c.end();
+
+  const child = exec(`docker exec -i dataforge-db psql -U postgres "${proj}"`, { maxBuffer: 1024 * 1024 * 50 }, (err, stdout, stderr) => {
+    if (err && (!stdout || stdout.trim().length === 0)) {
+      console.error('Import error:', stderr || err.message);
+      return res.status(400).json({ success: false, message: stderr || err.message });
+    }
+
+    // Auto-grant permissions on newly imported tables & sequences to the dedicated project user
+    getProjectCredentials(proj).then(creds => {
+      if (creds && creds.dbUser && creds.dbUser !== DB_USER) {
+        masterPool.query(`GRANT ALL PRIVILEGES ON DATABASE "${proj}" TO "${creds.dbUser}"`).catch(() => {});
+        getProjectClient(proj).then(async (c) => {
+          try {
+            await c.query(`GRANT ALL ON SCHEMA public TO "${creds.dbUser}"`);
+            await c.query(`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${creds.dbUser}"`);
+            await c.query(`GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${creds.dbUser}"`);
+            await c.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "${creds.dbUser}"`);
+            await c.end();
+          } catch (e) {}
+        }).catch(() => {});
+      }
+    });
+
     res.json({ success: true, message: 'Database schema and data imported successfully!' });
-  } catch (e) {
-    res.status(400).json({ success: false, message: e.message });
-  }
+  });
+
+  child.stdin.write(sql);
+  child.stdin.end();
 });
 
 // ====================================================================
