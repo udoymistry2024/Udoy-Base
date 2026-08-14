@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: dataforge-db
+    container_name: udoybase-db
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -12,11 +12,11 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: dataforge_secure_2026
+      POSTGRES_PASSWORD: udoybase_secure_2026
       POSTGRES_DB: postgres
     volumes:
-      - dataforge-pg-data:/var/lib/postgresql/data
+      - udoybase-pg-data:/var/lib/postgresql/data
 
 volumes:
-  dataforge-pg-data:
-    name: dataforge-pg-data
+  udoybase-pg-data:
+    name: udoybase-pg-data

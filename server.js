@@ -10,8 +10,8 @@ const PORT = process.env.PLATFORM_PORT || 4000;
 const DB_HOST = process.env.POSTGRES_HOST || 'localhost';
 const DB_PORT = process.env.POSTGRES_PORT || 5432;
 const DB_USER = process.env.POSTGRES_USER || 'postgres';
-const DB_PASS = process.env.POSTGRES_PASSWORD || 'dataforge_secure_2026';
-const JWT_SECRET = process.env.JWT_SECRET || 'dataforge-jwt-secret-key-must-be-at-least-32-chars-long';
+const DB_PASS = process.env.POSTGRES_PASSWORD || 'udoybase_secure_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'udoybase-jwt-secret-key-must-be-at-least-32-chars-long';
 
 app.use(cors());
 app.use(express.json());
@@ -38,7 +38,7 @@ function generateRandomPassword(length = 16) {
 
 function generateJwtKeys(projectName) {
   const anonPayload = {
-    iss: 'dataforge', ref: projectName, role: 'anon',
+    iss: 'udoybase', ref: projectName, role: 'anon',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 3600 * 24 * 365 * 10,
   };
@@ -61,7 +61,7 @@ async function getProjectClient(dbName) {
 
 async function getProjectCredentials(dbName) {
   try {
-    const res = await masterPool.query('SELECT db_user, db_password FROM _dataforge_project_credentials WHERE project_name = $1', [dbName]);
+    const res = await masterPool.query('SELECT db_user, db_password FROM _udoybase_project_credentials WHERE project_name = $1', [dbName]);
     if (res.rows.length > 0) {
       return { dbUser: res.rows[0].db_user, dbPassword: res.rows[0].db_password };
     }
@@ -95,7 +95,7 @@ async function getProjectCredentials(dbName) {
     }
 
     await masterPool.query(
-      `INSERT INTO _dataforge_project_credentials (project_name, db_user, db_password) VALUES ($1, $2, $3)
+      `INSERT INTO _udoybase_project_credentials (project_name, db_user, db_password) VALUES ($1, $2, $3)
        ON CONFLICT (project_name) DO UPDATE SET db_user = $2, db_password = $3, updated_at = NOW()`,
       [dbName, dbUser, dbPassword]
     );
@@ -116,7 +116,7 @@ const crypto = require('crypto');
 async function initAuthDb() {
   try {
     await masterPool.query(`
-      CREATE TABLE IF NOT EXISTS _dataforge_admin_users (
+      CREATE TABLE IF NOT EXISTS _udoybase_admin_users (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT NOT NULL,
@@ -128,7 +128,7 @@ async function initAuthDb() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS _dataforge_project_credentials (
+      CREATE TABLE IF NOT EXISTS _udoybase_project_credentials (
         project_name TEXT PRIMARY KEY,
         db_user TEXT NOT NULL,
         db_password TEXT NOT NULL,
@@ -143,7 +143,7 @@ async function initAuthDb() {
 initAuthDb();
 
 function hashPassword(password) {
-  return crypto.pbkdf2Sync(password, 'dataforge_salt_2026', 100000, 64, 'sha512').toString('hex');
+  return crypto.pbkdf2Sync(password, 'udoybase_salt_2026', 100000, 64, 'sha512').toString('hex');
 }
 
 const pendingOtps = new Map();
@@ -153,7 +153,7 @@ function generateOtp() {
 }
 
 async function sendTelegramOtp(botToken, chatId, otpCode, purpose = 'Verification') {
-  const text = `⚡ <b>DataForge Security Verification</b>\n\nYour 2FA OTP Code for <b>${purpose}</b> is:\n\n<code>${otpCode}</code>\n\n<i>This code is valid for 5 minutes. Do NOT share it with anyone.</i>`;
+  const text = `⚡ <b>Udoy Base Security Verification</b>\n\nYour 2FA OTP Code for <b>${purpose}</b> is:\n\n<code>${otpCode}</code>\n\n<i>This code is valid for 5 minutes. Do NOT share it with anyone.</i>`;
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
   
   const payload = {
@@ -201,7 +201,7 @@ function authMiddleware(req, res, next) {
   if (!token) return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.scope !== 'dataforge_admin') throw new Error('Invalid token scope');
+    if (decoded.scope !== 'udoybase_admin') throw new Error('Invalid token scope');
     req.adminUser = decoded;
     next();
   } catch (e) {
@@ -215,7 +215,7 @@ function authMiddleware(req, res, next) {
 
 app.get('/api/auth/status', async (req, res) => {
   try {
-    const r = await masterPool.query('SELECT id, name, email, telegram_username, telegram_user_id, avatar_url FROM _dataforge_admin_users LIMIT 1');
+    const r = await masterPool.query('SELECT id, name, email, telegram_username, telegram_user_id, avatar_url FROM _udoybase_admin_users LIMIT 1');
     const isRegistered = r.rows.length > 0;
     let isAuthenticated = false;
     let user = null;
@@ -225,7 +225,7 @@ app.get('/api/auth/status', async (req, res) => {
     if (token && isRegistered) {
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.scope === 'dataforge_admin') {
+        if (decoded.scope === 'udoybase_admin') {
           isAuthenticated = true;
           user = r.rows[0];
         }
@@ -273,15 +273,15 @@ app.post('/api/auth/verify-signup-otp', async (req, res) => {
   const passwordHash = hashPassword(password);
 
   try {
-    await masterPool.query('DELETE FROM _dataforge_admin_users');
+    await masterPool.query('DELETE FROM _udoybase_admin_users');
     const r = await masterPool.query(
-      `INSERT INTO _dataforge_admin_users (name, email, password_hash, telegram_username, telegram_user_id, telegram_bot_token)
+      `INSERT INTO _udoybase_admin_users (name, email, password_hash, telegram_username, telegram_user_id, telegram_bot_token)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, telegram_username, telegram_user_id`,
       [name, email, passwordHash, telegramUsername, telegramUserId, telegramBotToken]
     );
     pendingOtps.delete(tempId);
 
-    const token = jwt.sign({ id: r.rows[0].id, email: r.rows[0].email, scope: 'dataforge_admin' }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: r.rows[0].id, email: r.rows[0].email, scope: 'udoybase_admin' }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ success: true, token, user: r.rows[0], message: 'Account created successfully!' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
@@ -293,7 +293,7 @@ app.post('/api/auth/login-step1', async (req, res) => {
   if (!password) return res.status(400).json({ success: false, message: 'Password required' });
 
   try {
-    const r = await masterPool.query('SELECT * FROM _dataforge_admin_users LIMIT 1');
+    const r = await masterPool.query('SELECT * FROM _udoybase_admin_users LIMIT 1');
     if (!r.rows.length) return res.status(400).json({ success: false, message: 'No admin account found. Please sign up.' });
 
     const admin = r.rows[0];
@@ -328,18 +328,18 @@ app.post('/api/auth/login-step2', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Incorrect OTP code' });
   }
 
-  const r = await masterPool.query('SELECT id, name, email, telegram_username, telegram_user_id FROM _dataforge_admin_users WHERE id = $1', [pending.adminId]);
+  const r = await masterPool.query('SELECT id, name, email, telegram_username, telegram_user_id FROM _udoybase_admin_users WHERE id = $1', [pending.adminId]);
   pendingOtps.delete(tempId);
 
   if (!r.rows.length) return res.status(400).json({ success: false, message: 'Admin account not found' });
 
-  const token = jwt.sign({ id: r.rows[0].id, email: r.rows[0].email, scope: 'dataforge_admin' }, JWT_SECRET, { expiresIn: '30d' });
+  const token = jwt.sign({ id: r.rows[0].id, email: r.rows[0].email, scope: 'udoybase_admin' }, JWT_SECRET, { expiresIn: '30d' });
   res.json({ success: true, token, user: r.rows[0], message: 'Login successful!' });
 });
 
 app.post('/api/auth/forgot-step1', async (req, res) => {
   try {
-    const r = await masterPool.query('SELECT * FROM _dataforge_admin_users LIMIT 1');
+    const r = await masterPool.query('SELECT * FROM _udoybase_admin_users LIMIT 1');
     if (!r.rows.length) return res.status(400).json({ success: false, message: 'No admin account configured.' });
 
     const admin = r.rows[0];
@@ -373,7 +373,7 @@ app.post('/api/auth/forgot-step2', async (req, res) => {
   }
 
   const passwordHash = hashPassword(newPassword);
-  await masterPool.query('UPDATE _dataforge_admin_users SET password_hash = $1 WHERE id = $2', [passwordHash, pending.adminId]);
+  await masterPool.query('UPDATE _udoybase_admin_users SET password_hash = $1 WHERE id = $2', [passwordHash, pending.adminId]);
   pendingOtps.delete(tempId);
 
   res.json({ success: true, message: 'Password reset successfully! Please login with your new password.' });
@@ -381,7 +381,7 @@ app.post('/api/auth/forgot-step2', async (req, res) => {
 
 app.get('/api/auth/profile', authMiddleware, async (req, res) => {
   try {
-    const r = await masterPool.query('SELECT id, name, email, telegram_username, telegram_user_id, telegram_bot_token FROM _dataforge_admin_users WHERE id = $1', [req.adminUser.id]);
+    const r = await masterPool.query('SELECT id, name, email, telegram_username, telegram_user_id, telegram_bot_token FROM _udoybase_admin_users WHERE id = $1', [req.adminUser.id]);
     if (!r.rows.length) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, user: r.rows[0] });
   } catch (e) {
@@ -395,7 +395,7 @@ app.post('/api/auth/send-passchange-otp', authMiddleware, async (req, res) => {
     return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
   }
   try {
-    const r = await masterPool.query('SELECT * FROM _dataforge_admin_users WHERE id = $1', [req.adminUser.id]);
+    const r = await masterPool.query('SELECT * FROM _udoybase_admin_users WHERE id = $1', [req.adminUser.id]);
     if (!r.rows.length) return res.status(400).json({ success: false, message: 'User not found' });
     const admin = r.rows[0];
 
@@ -428,7 +428,7 @@ app.post('/api/auth/verify-passchange-otp', authMiddleware, async (req, res) => 
   }
 
   const passwordHash = hashPassword(pending.newPassword);
-  await masterPool.query('UPDATE _dataforge_admin_users SET password_hash = $1 WHERE id = $2', [passwordHash, pending.adminId]);
+  await masterPool.query('UPDATE _udoybase_admin_users SET password_hash = $1 WHERE id = $2', [passwordHash, pending.adminId]);
   pendingOtps.delete(tempId);
 
   res.json({ success: true, message: 'Password changed successfully!' });
@@ -450,7 +450,7 @@ app.post('/api/auth/profile', authMiddleware, async (req, res) => {
     if (!fields.length) return res.status(400).json({ success: false, message: 'No profile fields to update' });
 
     vals.push(req.adminUser.id);
-    const q = `UPDATE _dataforge_admin_users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, name, email, telegram_username, telegram_user_id, telegram_bot_token`;
+    const q = `UPDATE _udoybase_admin_users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, name, email, telegram_username, telegram_user_id, telegram_bot_token`;
     const r = await masterPool.query(q, vals);
     res.json({ success: true, user: r.rows[0], message: 'Profile & Security settings updated!' });
   } catch (e) {
@@ -532,9 +532,9 @@ app.post('/api/projects', async (req, res) => {
     `);
     await masterPool.query(`GRANT ALL PRIVILEGES ON DATABASE "${rawName}" TO "${dbUser}"`);
 
-    // Save in _dataforge_project_credentials
+    // Save in _udoybase_project_credentials
     await masterPool.query(
-      `INSERT INTO _dataforge_project_credentials (project_name, db_user, db_password) VALUES ($1, $2, $3)
+      `INSERT INTO _udoybase_project_credentials (project_name, db_user, db_password) VALUES ($1, $2, $3)
        ON CONFLICT (project_name) DO UPDATE SET db_user = $2, db_password = $3, updated_at = NOW()`,
       [rawName, dbUser, dbPassword]
     );
@@ -578,7 +578,7 @@ app.delete('/api/projects/:name', async (req, res) => {
     }
 
     // Clean metadata
-    await masterPool.query(`DELETE FROM _dataforge_project_credentials WHERE project_name = $1`, [dbName]);
+    await masterPool.query(`DELETE FROM _udoybase_project_credentials WHERE project_name = $1`, [dbName]);
 
     res.json({ success: true });
   } catch (e) {
@@ -633,7 +633,7 @@ app.put('/api/projects/:name/credentials', async (req, res) => {
 
     // Update metadata table
     await masterPool.query(
-      `UPDATE _dataforge_project_credentials SET db_password = $1, updated_at = NOW() WHERE project_name = $2`,
+      `UPDATE _udoybase_project_credentials SET db_password = $1, updated_at = NOW() WHERE project_name = $2`,
       [newPass, dbName]
     );
 
@@ -816,7 +816,7 @@ const { exec } = require('child_process');
 
 app.get('/api/projects/:name/export', (req, res) => {
   const proj = req.params.name.replace(/[^a-zA-Z0-9_]/g, '');
-  const cmd = `docker exec dataforge-db pg_dump -U postgres "${proj}"`;
+  const cmd = `docker exec udoybase-db pg_dump -U postgres "${proj}"`;
   exec(cmd, { maxBuffer: 1024 * 1024 * 50 }, (err, stdout, stderr) => {
     if (err) {
       return res.status(500).json({ success: false, message: stderr || err.message });
@@ -835,7 +835,7 @@ app.post('/api/projects/:name/import', async (req, res) => {
   const { sql } = req.body;
   if (!sql) return res.status(400).json({ success: false, message: 'SQL content required' });
 
-  const child = exec(`docker exec -i dataforge-db psql -U postgres "${proj}"`, { maxBuffer: 1024 * 1024 * 50 }, (err, stdout, stderr) => {
+  const child = exec(`docker exec -i udoybase-db psql -U postgres "${proj}"`, { maxBuffer: 1024 * 1024 * 50 }, (err, stdout, stderr) => {
     if (err && (!stdout || stdout.trim().length === 0)) {
       console.error('Import error:', stderr || err.message);
       return res.status(400).json({ success: false, message: stderr || err.message });
@@ -873,5 +873,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n  ⚡ DataForge is running at http://localhost:${PORT}\n`);
+  console.log(`\n  ⚡ Udoy Base is running at http://localhost:${PORT}\n`);
 });

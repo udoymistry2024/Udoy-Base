@@ -1,5 +1,5 @@
 // ====================================================================
-// DataForge — Frontend Application Logic
+// Udoy Base — Frontend Application Logic
 // ====================================================================
 
 const API = '';
@@ -14,7 +14,7 @@ let allProjects = [];
 // ====================================================================
 
 async function api(path, opts = {}) {
-  const token = localStorage.getItem('dataforge_admin_token');
+  const token = localStorage.getItem('udoybase_admin_token');
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API}${path}`, {
@@ -254,12 +254,12 @@ function renderDocsContent(topic) {
   const topics = {
     quickstart: `
       <div class="settings-content" style="max-width:820px">
-        <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">DataForge Quickstart Guide</h1>
+        <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Udoy Base Quickstart Guide</h1>
         <p class="text-muted" style="margin-bottom:24px">Create databases, manage schemas, and connect your web backend in under 3 minutes.</p>
 
         <div class="settings-section">
           <h3>Step 1: Create a Project</h3>
-          <p class="text-muted mb-3">Click the <strong>"+ New Project"</strong> button at the top right of the Projects page. Enter a project name (e.g. <code>ecommerce_app</code>). DataForge will automatically provision an isolated PostgreSQL 15 database instance inside Docker.</p>
+          <p class="text-muted mb-3">Click the <strong>"+ New Project"</strong> button at the top right of the Projects page. Enter a project name (e.g. <code>ecommerce_app</code>). Udoy Base will automatically provision an isolated PostgreSQL 15 database instance inside Docker.</p>
         </div>
 
         <div class="settings-section">
@@ -277,7 +277,7 @@ function renderDocsContent(topic) {
     architecture: `
       <div class="settings-content" style="max-width:820px">
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Platform Architecture</h1>
-        <p class="text-muted" style="margin-bottom:24px">How DataForge provides isolated PostgreSQL databases with persistent storage.</p>
+        <p class="text-muted" style="margin-bottom:24px">How Udoy Base provides isolated PostgreSQL databases with persistent storage.</p>
 
         <div class="settings-section">
           <h3>Core Components</h3>
@@ -286,7 +286,7 @@ function renderDocsContent(topic) {
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
               PostgreSQL 15 Engine
             </div>
-            <div class="text-sm text-muted mt-2">Runs inside Docker container <code>dataforge-db</code> with persistent named volume <code>dataforge-pg-data</code>.</div>
+            <div class="text-sm text-muted mt-2">Runs inside Docker container <code>udoybase-db</code> with persistent named volume <code>udoybase-pg-data</code>.</div>
           </div>
           <div class="connection-card" style="margin-bottom:12px">
             <div style="font-weight:600;color:var(--blue);display:flex;align-items:center;gap:8px">
@@ -314,7 +314,7 @@ function renderDocsContent(topic) {
     nodejs: `
       <div class="settings-content" style="max-width:820px">
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Node.js & Express Integration</h1>
-        <p class="text-muted" style="margin-bottom:24px">Connect your Express API or Next.js backend to DataForge using <code>node-postgres</code> (pg).</p>
+        <p class="text-muted" style="margin-bottom:24px">Connect your Express API or Next.js backend to Udoy Base using <code>node-postgres</code> (pg).</p>
 
         <div class="settings-section">
           <h3>1. Install <code>pg</code> module</h3>
@@ -326,7 +326,7 @@ function renderDocsContent(topic) {
           <pre class="code-snippet">const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project'
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project'
 });
 
 module.exports = pool;</pre>
@@ -359,7 +359,7 @@ app.get('/api/products', async (req, res) => {
           <h3>Using <code>psycopg2</code></h3>
           <pre class="code-snippet">import psycopg2
 
-conn = psycopg2.connect("postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project")
+conn = psycopg2.connect("postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project")
 cur = conn.cursor()
 
 cur.execute("SELECT * FROM products WHERE price > %s", (100,))
@@ -373,7 +373,7 @@ for p in products:
           <h3>Using <code>SQLAlchemy</code></h3>
           <pre class="code-snippet">from sqlalchemy import create_engine
 
-DATABASE_URL = "postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project"
+DATABASE_URL = "postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project"
 engine = create_engine(DATABASE_URL)
 
 with engine.connect() as conn:
@@ -387,7 +387,7 @@ with engine.connect() as conn:
     prisma: `
       <div class="settings-content" style="max-width:820px">
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Prisma ORM Integration</h1>
-        <p class="text-muted" style="margin-bottom:24px">Use Prisma with DataForge for type-safe database queries.</p>
+        <p class="text-muted" style="margin-bottom:24px">Use Prisma with Udoy Base for type-safe database queries.</p>
 
         <div class="settings-section">
           <h3>1. Configure <code>prisma/schema.prisma</code></h3>
@@ -410,11 +410,11 @@ model User {
 
         <div class="settings-section">
           <h3>2. Set <code>.env</code></h3>
-          <pre class="code-snippet">DATABASE_URL="postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project"</pre>
+          <pre class="code-snippet">DATABASE_URL="postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project"</pre>
         </div>
 
         <div class="settings-section">
-          <h3>3. Push schema to DataForge</h3>
+          <h3>3. Push schema to Udoy Base</h3>
           <pre class="code-snippet">npx prisma db push</pre>
         </div>
       </div>
@@ -423,7 +423,7 @@ model User {
     laravel: `
       <div class="settings-content" style="max-width:820px">
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">PHP & Laravel Integration</h1>
-        <p class="text-muted" style="margin-bottom:24px">Connect Laravel or vanilla PHP projects to DataForge.</p>
+        <p class="text-muted" style="margin-bottom:24px">Connect Laravel or vanilla PHP projects to Udoy Base.</p>
 
         <div class="settings-section">
           <h3>Laravel <code>.env</code> Configuration</h3>
@@ -432,7 +432,7 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=your_project
 DB_USERNAME=postgres
-DB_PASSWORD=dataforge_secure_2026</pre>
+DB_PASSWORD=udoybase_secure_2026</pre>
         </div>
 
         <div class="settings-section">
@@ -445,12 +445,12 @@ DB_PASSWORD=dataforge_secure_2026</pre>
     'connection-strings': `
       <div class="settings-content" style="max-width:820px">
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Connection URIs & API Keys Reference</h1>
-        <p class="text-muted" style="margin-bottom:24px">Understanding connection formats and key permissions in DataForge.</p>
+        <p class="text-muted" style="margin-bottom:24px">Understanding connection formats and key permissions in Udoy Base.</p>
 
         <div class="settings-section">
           <h3>PostgreSQL Connection URI Format</h3>
           <pre class="code-snippet">postgresql://[user]:[password]@[host]:[port]/[database_name]</pre>
-          <p class="text-muted mt-2">Example: <code>postgresql://postgres:dataforge_secure_2026@localhost:5432/ecommerce</code></p>
+          <p class="text-muted mt-2">Example: <code>postgresql://postgres:udoybase_secure_2026@localhost:5432/ecommerce</code></p>
         </div>
 
         <div class="settings-section">
@@ -469,8 +469,8 @@ DB_PASSWORD=dataforge_secure_2026</pre>
 
     'rest-api': `
       <div class="settings-content" style="max-width:850px">
-        <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">DataForge REST API Reference</h1>
-        <p class="text-muted" style="margin-bottom:24px">All endpoints exposed by the DataForge API server on port 4000.</p>
+        <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Udoy Base REST API Reference</h1>
+        <p class="text-muted" style="margin-bottom:24px">All endpoints exposed by the Udoy Base API server on port 4000.</p>
 
         <div class="data-grid-wrap" style="border:1px solid var(--border);border-radius:var(--radius-lg)">
           <table class="data-grid">
@@ -541,7 +541,7 @@ DB_PASSWORD=dataforge_secure_2026</pre>
         <div class="settings-section">
           <h3>1. Data Persistence & Docker Volume</h3>
           <p class="text-muted mb-3">
-            DataForge stores all PostgreSQL databases, table schemas, and data rows inside persistent Docker volume <code>dataforge-pg-data</code>.
+            Udoy Base stores all PostgreSQL databases, table schemas, and data rows inside persistent Docker volume <code>udoybase-pg-data</code>.
             Your data remains 100% safe across machine reboots, server restarts, and container updates.
           </p>
         </div>
@@ -550,14 +550,14 @@ DB_PASSWORD=dataforge_secure_2026</pre>
           <h3>2. Single Project Backup (<code>pg_dump</code>)</h3>
           <p class="text-muted mb-2">Export a single project database to a standalone <code>.sql</code> file:</p>
           <pre class="code-snippet"># Backup project database (e.g. portfolio)
-docker exec dataforge-db pg_dump -U postgres portfolio > portfolio_backup.sql</pre>
+docker exec udoybase-db pg_dump -U postgres portfolio > portfolio_backup.sql</pre>
         </div>
 
         <div class="settings-section">
           <h3>3. Full Server Cluster Backup (<code>pg_dumpall</code>)</h3>
-          <p class="text-muted mb-2">Export ALL databases and projects on your DataForge server into one master backup file:</p>
+          <p class="text-muted mb-2">Export ALL databases and projects on your Udoy Base server into one master backup file:</p>
           <pre class="code-snippet"># Backup all databases and projects
-docker exec dataforge-db pg_dumpall -U postgres > full_dataforge_backup.sql</pre>
+docker exec udoybase-db pg_dumpall -U postgres > full_udoybase_backup.sql</pre>
         </div>
 
         <div class="settings-section">
@@ -566,7 +566,7 @@ docker exec dataforge-db pg_dumpall -U postgres > full_dataforge_backup.sql</pre
           
           <div class="connection-card" style="margin-bottom:12px">
             <div style="font-weight:600;color:var(--brand)">Step 1: Export SQL Dump on Source Computer</div>
-            <pre class="code-snippet" style="margin-top:6px">docker exec dataforge-db pg_dump -U postgres my_project > my_project.sql</pre>
+            <pre class="code-snippet" style="margin-top:6px">docker exec udoybase-db pg_dump -U postgres my_project > my_project.sql</pre>
           </div>
 
           <div class="connection-card" style="margin-bottom:12px">
@@ -576,13 +576,13 @@ docker exec dataforge-db pg_dumpall -U postgres > full_dataforge_backup.sql</pre
           </div>
 
           <div class="connection-card" style="margin-bottom:12px">
-            <div style="font-weight:600;color:var(--brand)">Step 3: Setup DataForge & Create Project on Target Computer</div>
-            <p class="text-sm text-muted mt-1">Start DataForge on the target machine and create project <code>my_project</code> from UI.</p>
+            <div style="font-weight:600;color:var(--brand)">Step 3: Setup Udoy Base & Create Project on Target Computer</div>
+            <p class="text-sm text-muted mt-1">Start Udoy Base on the target machine and create project <code>my_project</code> from UI.</p>
           </div>
 
           <div class="connection-card">
             <div style="font-weight:600;color:var(--brand)">Step 4: Restore / Import SQL Data into Target Computer</div>
-            <pre class="code-snippet" style="margin-top:6px">docker exec -i dataforge-db psql -U postgres -d my_project < my_project.sql</pre>
+            <pre class="code-snippet" style="margin-top:6px">docker exec -i udoybase-db psql -U postgres -d my_project < my_project.sql</pre>
           </div>
         </div>
       </div>
@@ -591,12 +591,12 @@ docker exec dataforge-db pg_dumpall -U postgres > full_dataforge_backup.sql</pre
     vps: `
       <div class="settings-content" style="max-width:820px">
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">VPS Deployment Guide</h1>
-        <p class="text-muted" style="margin-bottom:24px">Deploy DataForge to a Linux VPS (DigitalOcean, Hetzner, AWS) with SSL.</p>
+        <p class="text-muted" style="margin-bottom:24px">Deploy Udoy Base to a Linux VPS (DigitalOcean, Hetzner, AWS) with SSL.</p>
 
         <div class="settings-section">
           <h3>1. Nginx Reverse Proxy with Let's Encrypt SSL</h3>
           <pre class="code-snippet">server {
-    server_name dataforge.yourdomain.com;
+    server_name udoybase.yourdomain.com;
 
     location / {
         proxy_pass http://127.0.0.1:4000;
@@ -616,7 +616,7 @@ docker exec dataforge-db pg_dumpall -U postgres > full_dataforge_backup.sql</pre
     developer: `
       <div class="settings-content" style="max-width:820px">
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">About the Developer</h1>
-        <p class="text-muted" style="margin-bottom:24px">The creator and story behind the DataForge Database Platform.</p>
+        <p class="text-muted" style="margin-bottom:24px">The creator and story behind the Udoy Base Database Platform.</p>
 
         <div class="connection-card" style="padding:28px;margin-bottom:24px">
           <div style="display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap">
@@ -626,7 +626,7 @@ docker exec dataforge-db pg_dumpall -U postgres > full_dataforge_backup.sql</pre
             </div>
             <div>
               <h2 style="font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:4px">Udoy Mistry (উদয় মিস্ত্রি)</h2>
-              <div style="color:var(--brand);font-weight:600;font-size:14px">Machine Learning & Deep Learning Engineer (ML/DL) • Creator of DataForge</div>
+              <div style="color:var(--brand);font-weight:600;font-size:14px">Machine Learning & Deep Learning Engineer (ML/DL) • Creator of Udoy Base</div>
               <div class="text-sm text-muted mt-1" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                 <span>HSC 1st Year Student</span> • 
                 <span>AI / ML & Deep Learning Specialist</span> • 
@@ -638,10 +638,10 @@ docker exec dataforge-db pg_dumpall -U postgres > full_dataforge_backup.sql</pre
           <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:20px">
             <h3 style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--text-primary);display:flex;align-items:center;gap:8px">
               <svg width="18" height="18" fill="none" stroke="var(--brand)" stroke-width="2" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-3.05 11a22.35 22.35 0 0 1-3.95 2z"/><path d="M9 12l-5 5"/><path d="M15 9l5-5"/></svg>
-              About DataForge & Building Process
+              About Udoy Base & Building Process
             </h3>
             <p class="text-muted" style="line-height:1.8;margin-bottom:16px">
-              DataForge was conceptualized and engineered by <strong>Udoy Mistry</strong>, an HSC 1st-year student from Rampal, Bagerhat, Khulna Division, Bangladesh. Dedicated to becoming a professional <strong>Machine Learning (ML) and Deep Learning (DL) Engineer</strong>, Udoy actively researches, trains, and builds Artificial Intelligence models as his core career goal.
+              Udoy Base was conceptualized and engineered by <strong>Udoy Mistry</strong>, an HSC 1st-year student from Rampal, Bagerhat, Khulna Division, Bangladesh. Dedicated to becoming a professional <strong>Machine Learning (ML) and Deep Learning (DL) Engineer</strong>, Udoy actively researches, trains, and builds Artificial Intelligence models as his core career goal.
             </p>
             <p class="text-muted" style="line-height:1.8">
               To support robust data pipelines and local database infrastructure for AI and full-stack projects, Udoy engineered this complete self-hosted, multi-project PostgreSQL database management platform in pair programming collaboration with <strong>Google Antigravity AI Coding Agent</strong>.
@@ -2067,7 +2067,7 @@ async function verifySignupOtp(tempId) {
   });
 
   if (res.success) {
-    localStorage.setItem('dataforge_admin_token', res.token);
+    localStorage.setItem('udoybase_admin_token', res.token);
     showToast('success', 'Admin account created successfully!');
     location.hash = '#/projects';
     checkAuthStatus().then(ok => { if(ok) handleRoute(); });
@@ -2155,7 +2155,7 @@ async function submitLoginStep2(tempId) {
   });
 
   if (res.success) {
-    localStorage.setItem('dataforge_admin_token', res.token);
+    localStorage.setItem('udoybase_admin_token', res.token);
     showToast('success', 'Logged in successfully!');
     location.hash = '#/projects';
     checkAuthStatus().then(ok => { if(ok) handleRoute(); });
@@ -2388,7 +2388,7 @@ async function verifyPassChangeOtp(tempId) {
 }
 
 function handleLogout() {
-  localStorage.removeItem('dataforge_admin_token');
+  localStorage.removeItem('udoybase_admin_token');
   currentUser = null;
   showToast('success', 'Logged out successfully');
   checkAuthStatus();

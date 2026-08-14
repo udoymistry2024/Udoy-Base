@@ -11,15 +11,15 @@ RESET='\033[0m'
 
 echo -e "${ORANGE}${BOLD}"
 echo "=========================================================="
-echo "🛑 Stopping DataForge Platform..."
+echo "🛑 Stopping Udoy Base Platform..."
 echo "=========================================================="
 echo -e "${RESET}"
 
 # Stop Node.js server process
-if [ -f .dataforge.pid ]; then
-  PID=$(cat .dataforge.pid)
+if [ -f .udoybase.pid ]; then
+  PID=$(cat .udoybase.pid)
   kill $PID 2>/dev/null || kill -9 $PID 2>/dev/null || true
-  rm -f .dataforge.pid
+  rm -f .udoybase.pid
   echo -e "${GREEN}✅ Node.js server process (PID $PID) stopped.${RESET}"
 fi
 
@@ -36,6 +36,6 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}${BOLD}✅ DataForge platform stopped successfully!${RESET}"
-echo -e "   Your database schemas and rows remain safely persisted in Docker volume 'dataforge-pg-data'."
+echo -e "${GREEN}${BOLD}✅ Udoy Base platform stopped successfully!${RESET}"
+echo -e "   Your database schemas and rows remain safely persisted in Docker volume 'udoybase-pg-data'."
 echo ""

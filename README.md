@@ -1,4 +1,4 @@
-# ⚡ DataForge — Self-Hosted Database Platform
+# ⚡ Udoy Base — Self-Hosted Database Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](https://opensource.org/licenses/MIT)
 [![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg)](https://www.docker.com/)
 [![Security: Telegram 2FA](https://img.shields.io/badge/Security-Telegram%202FA-0088cc.svg)](https://telegram.org/)
 
-**DataForge** is a fast, lightweight, self-hosted database platform and **Supabase alternative** designed for local development and private VPS servers. It provisions isolated PostgreSQL 15 databases on demand, complete with a dark-mode web management GUI, visual table editor, raw SQL console, graphical SQL backups, and Telegram 2FA security.
+**Udoy Base** is a fast, lightweight, self-hosted database platform and **Supabase alternative** designed for local development and private VPS servers. It provisions isolated PostgreSQL 15 databases on demand, complete with a dark-mode web management GUI, visual table editor, raw SQL console, graphical SQL backups, and Telegram 2FA security.
 
 ---
 
@@ -19,40 +19,40 @@
 - 💻 **Interactive SQL Console**: Execute arbitrary raw DDL and DML queries with formatted JSON output.
 - 💾 **1-Click SQL Backup & Migration**: Export complete standalone `.sql` dumps or restore database schemas and data visually.
 - 🎨 **Carbon Dark Aesthetics**: Supabase-inspired UI built with pure Vanilla JavaScript (SPA), HTML5, and CSS3 for instant load speeds.
-- 📦 **100% Persistent Storage**: Powered by Docker named volume (`dataforge-pg-data`), guaranteeing zero data loss across reboots.
+- 📦 **100% Persistent Storage**: Powered by Docker named volume (`udoybase-pg-data`), guaranteeing zero data loss across reboots.
 
 ---
 
 ## ⚡ 1-Line Instant Automated Installation
 
-Run this single command on your Linux PC or VPS terminal to automatically clone, configure dependencies, start PostgreSQL in Docker, and launch DataForge:
+Run this single command on your Linux PC or VPS terminal to automatically clone, configure dependencies, start PostgreSQL in Docker, and launch Udoy Base:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/install.sh | bash
 ```
 
 ---
 
 ## 🗑️ Uninstallation & Complete Cleanup
 
-If you ever need to completely remove DataForge, stop background services, and purge database containers/volumes:
+If you ever need to completely remove Udoy Base, stop background services, and purge database containers/volumes:
 
 ### 1-Line Instant Automated Uninstall
 
-Run this single command in your Linux PC or VPS terminal to purge DataForge completely:
+Run this single command in your Linux PC or VPS terminal to purge Udoy Base completely:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/uninstall.sh | bash
+curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/uninstall.sh | bash
 ```
 
 ### Manual Uninstall
 
-If you installed DataForge manually or prefer step-by-step cleanup:
+If you installed Udoy Base manually or prefer step-by-step cleanup:
 
 ```bash
 ./stop.sh
 docker compose down -v
-rm -rf ~/dataforge
+rm -rf ~/udoybase
 ```
 
 ---
@@ -67,8 +67,8 @@ rm -rf ~/dataforge
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/udoymistry2024/DataForge.git
-cd DataForge
+git clone https://github.com/udoymistry2024/Udoy Base.git
+cd Udoy Base
 ```
 
 ### 2. Environment Configuration
@@ -82,9 +82,9 @@ cp .env.example .env
 Default `.env` configuration:
 ```env
 PORT=4000
-JWT_SECRET=dataforge-jwt-secret-key-must-be-at-least-32-chars-long
+JWT_SECRET=udoybase-jwt-secret-key-must-be-at-least-32-chars-long
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=dataforge_secure_2026
+POSTGRES_PASSWORD=udoybase_secure_2026
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 ```
@@ -98,7 +98,7 @@ chmod +x start.sh stop.sh
 ./start.sh
 ```
 
-`start.sh` automatically starts PostgreSQL 15 inside Docker and launches the DataForge server on `http://localhost:4000`.
+`start.sh` automatically starts PostgreSQL 15 inside Docker and launches the Udoy Base server on `http://localhost:4000`.
 
 To stop the platform gracefully:
 ```bash
@@ -109,7 +109,7 @@ To stop the platform gracefully:
 
 ## 📱 Telegram 2FA Configuration
 
-When launching DataForge for the first time, you will be prompted to set up your master admin credentials and connect your Telegram Bot:
+When launching Udoy Base for the first time, you will be prompted to set up your master admin credentials and connect your Telegram Bot:
 
 1. **Create a Telegram Bot**:
    - Open Telegram and search for [@BotFather](https://t.me/BotFather).
@@ -118,18 +118,18 @@ When launching DataForge for the first time, you will be prompted to set up your
    - Search for [@userinfobot](https://t.me/userinfobot) on Telegram and send `/start`.
    - Copy your numeric **Id** (e.g., `7496488114`).
 3. **Complete Admin Setup**:
-   - Enter your Bot API Token and Telegram User ID on the DataForge setup screen.
+   - Enter your Bot API Token and Telegram User ID on the Udoy Base setup screen.
    - Enter the 6-digit OTP code sent to your Telegram to activate your admin account!
 
 ---
 
 ## 🔗 Connecting Your Web Applications
 
-DataForge provides direct PostgreSQL connection strings and API credentials for every project:
+Udoy Base provides direct PostgreSQL connection strings and API credentials for every project:
 
 ### Connection String Format
 ```
-postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project
+postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project
 ```
 
 ### Node.js Integration (`pg`)
@@ -137,7 +137,7 @@ postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: 'postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project'
+  connectionString: 'postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project'
 });
 
 const { rows } = await pool.query('SELECT * FROM users');
@@ -148,7 +148,7 @@ console.log(rows);
 ```python
 import psycopg2
 
-conn = psycopg2.connect("postgresql://postgres:dataforge_secure_2026@localhost:5432/your_project")
+conn = psycopg2.connect("postgresql://postgres:udoybase_secure_2026@localhost:5432/your_project")
 cur = conn.cursor()
 cur.execute("SELECT * FROM users")
 print(cur.fetchall())

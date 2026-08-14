@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # ====================================================================
-# DataForge — 1-Line Automated Uninstaller & Cleanup Script
+# Udoy Base — 1-Line Automated Uninstaller & Cleanup Script
 # Works on Linux and macOS
-# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/uninstall.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/uninstall.sh | bash
 # ====================================================================
 
 BOLD='\033[1m'
@@ -15,18 +15,18 @@ RESET='\033[0m'
 
 echo -e "${RED}${BOLD}"
 echo "================================================================="
-echo "       ⚠️ DATAFORGE — UNINSTALLATION & CLEANUP SCRIPT"
+echo "       ⚠️ UDOY BASE — UNINSTALLATION & CLEANUP SCRIPT"
 echo "================================================================="
 echo -e "${RESET}"
 
-INSTALL_DIR="$HOME/dataforge"
+INSTALL_DIR="$HOME/udoybase"
 
 # 1. Stop Node.js Server Process
-echo -e "${CYAN}▶ Stopping DataForge server processes...${RESET}"
-if [ -f "$INSTALL_DIR/.dataforge.pid" ]; then
-    PID=$(cat "$INSTALL_DIR/.dataforge.pid")
+echo -e "${CYAN}▶ Stopping Udoy Base server processes...${RESET}"
+if [ -f "$INSTALL_DIR/.udoybase.pid" ]; then
+    PID=$(cat "$INSTALL_DIR/.udoybase.pid")
     kill -9 $PID 2>/dev/null || true
-    rm -f "$INSTALL_DIR/.dataforge.pid"
+    rm -f "$INSTALL_DIR/.udoybase.pid"
 fi
 pkill -f "node server.js" 2>/dev/null || true
 
@@ -44,21 +44,21 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Remove Docker named volume explicitly if still present
-docker volume rm dataforge-pg-data 2>/dev/null || true
+docker volume rm udoybase-pg-data 2>/dev/null || true
 
 # 3. Remove Installation Directory
 if [ -d "$INSTALL_DIR" ]; then
-    echo -e "${CYAN}▶ Removing DataForge directory ($INSTALL_DIR)...${RESET}"
+    echo -e "${CYAN}▶ Removing Udoy Base directory ($INSTALL_DIR)...${RESET}"
     rm -rf "$INSTALL_DIR"
 fi
 
 echo -e "\n${GREEN}${BOLD}================================================================="
-echo -e " ✅ DATAFORGE UNINSTALLED & PURGED SUCCESSFULLY!"
+echo -e " ✅ UDOY BASE UNINSTALLED & PURGED SUCCESSFULLY!"
 echo -e "=================================================================${RESET}"
 echo -e "• All background processes stopped."
-echo -e "• Docker database containers and volume 'dataforge-pg-data' removed."
+echo -e "• Docker database containers and volume 'udoybase-pg-data' removed."
 echo -e "• Installation directory '$INSTALL_DIR' removed."
 echo -e "-----------------------------------------------------------------"
-echo -e "To reinstall DataForge anytime, run:"
-echo -e "  curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/install.sh | bash"
+echo -e "To reinstall Udoy Base anytime, run:"
+echo -e "  curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/install.sh | bash"
 echo -e "=================================================================\n"

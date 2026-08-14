@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # ====================================================================
-# DataForge — 1-Line Automated Installer & Setup Script
+# Udoy Base — 1-Line Automated Installer & Setup Script
 # Works on Linux (Ubuntu/Debian/Arch/Fedora) and macOS
-# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/DataForge/main/install.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/udoymistry2024/Udoy Base/main/install.sh | bash
 # ====================================================================
 
 set -e
@@ -17,7 +17,7 @@ RESET='\033[0m'
 
 echo -e "${ORANGE}${BOLD}"
 echo "================================================================="
-echo "       ⚡ DATAFORGE — SELF-HOSTED DATABASE PLATFORM"
+echo "       ⚡ UDOY BASE — SELF-HOSTED DATABASE PLATFORM"
 echo "        One-Click Automated Installation & Setup"
 echo "================================================================="
 echo -e "${RESET}"
@@ -43,15 +43,15 @@ fi
 echo -e "${GREEN}✔ All system prerequisites met (Git, Node.js, Docker)!${RESET}\n"
 
 # 2. Define Installation Target Directory
-INSTALL_DIR="$HOME/dataforge"
+INSTALL_DIR="$HOME/udoybase"
 
 if [ -d "$INSTALL_DIR" ]; then
-    echo -e "${CYAN}▶ Updating existing DataForge installation in $INSTALL_DIR...${RESET}"
+    echo -e "${CYAN}▶ Updating existing Udoy Base installation in $INSTALL_DIR...${RESET}"
     cd "$INSTALL_DIR"
     git pull origin main
 else
-    echo -e "${CYAN}▶ Cloning DataForge repository into $INSTALL_DIR...${RESET}"
-    git clone https://github.com/udoymistry2024/DataForge.git "$INSTALL_DIR"
+    echo -e "${CYAN}▶ Cloning Udoy Base repository into $INSTALL_DIR...${RESET}"
+    git clone https://github.com/udoymistry2024/Udoy Base.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
 fi
 
@@ -78,23 +78,23 @@ else
     docker compose up -d
 fi
 
-# 7. Start DataForge Platform
-echo -e "${CYAN}▶ Starting DataForge platform server...${RESET}"
+# 7. Start Udoy Base Platform
+echo -e "${CYAN}▶ Starting Udoy Base platform server...${RESET}"
 
 pkill -f "node server.js" 2>/dev/null || true
-nohup node server.js > dataforge.log 2>&1 &
-echo $! > .dataforge.pid
+nohup node server.js > udoybase.log 2>&1 &
+echo $! > .udoybase.pid
 
 # 8. Success Banner
 SERVER_IP=$(curl -s https://api.ipify.org 2>/dev/null || echo "localhost")
 
 echo -e "\n${GREEN}${BOLD}================================================================="
-echo -e " 🎉 DATAFORGE INSTALLED & LAUNCHED SUCCESSFULLY!"
+echo -e " 🎉 UDOY BASE INSTALLED & LAUNCHED SUCCESSFULLY!"
 echo -e "=================================================================${RESET}"
 echo -e "${BOLD}Local Dashboard:${RESET}  http://localhost:4000"
 echo -e "${BOLD}VPS / Public URL:${RESET} http://${SERVER_IP}:4000"
 echo -e "-----------------------------------------------------------------"
 echo -e "• Stop Server:   ./stop.sh"
 echo -e "• Start Server:  ./start.sh"
-echo -e "• View Logs:     tail -f dataforge.log"
+echo -e "• View Logs:     tail -f udoybase.log"
 echo -e "=================================================================\n"
