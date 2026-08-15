@@ -17,12 +17,27 @@ async function api(path, opts = {}) {
   const token = localStorage.getItem('udoybase_admin_token');
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API}${path}`, {
-    headers: { ...headers, ...opts.headers },
-    ...opts,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${API}${path}`, {
+      headers: { ...headers, ...opts.headers },
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      data = { success: false, message: res.ok ? text : `Server Error (${res.status}): ${text.substring(0, 100)}` };
+    }
+    if (!res.ok && data.success !== false) {
+      data.success = false;
+      if (!data.message) data.message = `HTTP ${res.status} Error`;
+    }
+    return data;
+  } catch (e) {
+    return { success: false, message: e.message || 'Network request failed' };
+  }
 }
 
 // ====================================================================
@@ -1841,6 +1856,12 @@ async function executeImport(projectName) {
     return;
   }
 
+  const btn = (typeof event !== 'undefined' && event && event.target) ? event.target.closest('button') : null;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 0.8s linear infinite;margin-right:6px"></span> Restoring Database...`;
+  }
+
   showToast('info', 'Importing database schema and data...');
   const res = await api(`/api/projects/${projectName}/import`, {
     method: 'POST',
@@ -1854,6 +1875,10 @@ async function executeImport(projectName) {
     openProjectRoute(projectName, 'dashboard');
   } else {
     showToast('error', res.message || 'SQL import failed');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Start Import & Restore`;
+    }
   }
 }
 
