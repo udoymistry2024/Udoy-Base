@@ -14,8 +14,8 @@ const DB_PASS = process.env.POSTGRES_PASSWORD || 'udoybase_secure_2026';
 const JWT_SECRET = process.env.JWT_SECRET || 'udoybase-jwt-secret-key-must-be-at-least-32-chars-long';
 
 app.use(cors());
-app.use(express.json({ limit: '500gb' }));
-app.use(express.urlencoded({ limit: '500gb', extended: true }));
+app.use(express.json({ limit: '1000tb' }));
+app.use(express.urlencoded({ limit: '1000tb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Master pool connects to the system 'postgres' database
