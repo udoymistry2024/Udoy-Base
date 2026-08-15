@@ -848,8 +848,8 @@ app.get('/api/projects/:name/export', (req, res) => {
 app.post('/api/projects/:name/import', (req, res) => {
   const proj = req.params.name.replace(/[^a-zA-Z0-9_]/g, '');
 
-  // Spawn psql CLI engine
-  const child = spawn('docker', ['exec', '-i', 'udoybase-db', 'psql', '-U', 'postgres', proj]);
+  // Spawn psql CLI engine with strict error reporting
+  const child = spawn('docker', ['exec', '-i', 'udoybase-db', 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1', proj]);
 
   let stderrData = '';
   child.stderr.on('data', (d) => {
@@ -857,12 +857,11 @@ app.post('/api/projects/:name/import', (req, res) => {
   });
 
   child.on('close', (code) => {
-    // If psql failed with non-zero exit code
-    if (code !== 0 && stderrData && !stderrData.includes('NOTICE') && !stderrData.includes('ALTER DEFAULT PRIVILEGES')) {
+    const hasRealError = stderrData.includes('ERROR:') || (code !== 0 && !stderrData.includes('NOTICE'));
+    if (hasRealError) {
       console.error(`Import error [${proj}]:`, stderrData);
-      if (!res.headersSent) {
-        return res.status(400).json({ success: false, message: stderrData });
-      }
+      const cleanErr = stderrData.split('\n').filter(line => line.includes('ERROR:')).join('; ') || stderrData;
+      return res.status(400).json({ success: false, message: cleanErr.trim() });
     }
 
     // Auto-grant permissions on newly imported tables & sequences to the dedicated project user
@@ -881,9 +880,7 @@ app.post('/api/projects/:name/import', (req, res) => {
       }
     });
 
-    if (!res.headersSent) {
-      res.json({ success: true, message: 'Database schema and data imported successfully!' });
-    }
+    res.json({ success: true, message: 'Database schema and data imported successfully!' });
   });
 
   child.on('error', (err) => {
