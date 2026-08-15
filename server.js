@@ -14,8 +14,8 @@ const DB_PASS = process.env.POSTGRES_PASSWORD || 'udoybase_secure_2026';
 const JWT_SECRET = process.env.JWT_SECRET || 'udoybase-jwt-secret-key-must-be-at-least-32-chars-long';
 
 app.use(cors());
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+app.use(express.json({ limit: '500gb' }));
+app.use(express.urlencoded({ limit: '500gb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Master pool connects to the system 'postgres' database
@@ -813,33 +813,56 @@ app.post('/api/projects/:name/query', async (req, res) => {
 // API Routes: Database Backup & Import (GUI Support)
 // ====================================================================
 
-const { exec } = require('child_process');
+// ====================================================================
+// API Routes: Database Backup & Import (Unlimited Streaming Support)
+// ====================================================================
+
+const { exec, spawn } = require('child_process');
 
 app.get('/api/projects/:name/export', (req, res) => {
   const proj = req.params.name.replace(/[^a-zA-Z0-9_]/g, '');
-  const cmd = `docker exec udoybase-db pg_dump -U postgres "${proj}"`;
-  exec(cmd, { maxBuffer: 1024 * 1024 * 50 }, (err, stdout, stderr) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: stderr || err.message });
+
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Content-Type', 'application/sql');
+  res.setHeader('Content-Disposition', `attachment; filename="${proj}_backup.sql"`);
+
+  // Stream pg_dump output chunk-by-chunk directly to HTTP response (0 RAM overhead)
+  const child = spawn('docker', ['exec', 'udoybase-db', 'pg_dump', '-U', 'postgres', proj]);
+
+  child.stdout.pipe(res);
+
+  child.stderr.on('data', (data) => {
+    console.error(`Export stderr [${proj}]:`, data.toString());
+  });
+
+  child.on('error', (err) => {
+    console.error(`Export process error [${proj}]:`, err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: err.message });
     }
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Content-Type', 'application/sql');
-    res.setHeader('Content-Disposition', `attachment; filename="${proj}_backup.sql"`);
-    res.send(stdout);
   });
 });
 
-app.post('/api/projects/:name/import', async (req, res) => {
+app.post('/api/projects/:name/import', (req, res) => {
   const proj = req.params.name.replace(/[^a-zA-Z0-9_]/g, '');
-  const { sql } = req.body;
-  if (!sql) return res.status(400).json({ success: false, message: 'SQL content required' });
 
-  const child = exec(`docker exec -i udoybase-db psql -U postgres "${proj}"`, { maxBuffer: 1024 * 1024 * 50 }, (err, stdout, stderr) => {
-    if (err && (!stdout || stdout.trim().length === 0)) {
-      console.error('Import error:', stderr || err.message);
-      return res.status(400).json({ success: false, message: stderr || err.message });
+  // Spawn psql CLI engine
+  const child = spawn('docker', ['exec', '-i', 'udoybase-db', 'psql', '-U', 'postgres', proj]);
+
+  let stderrData = '';
+  child.stderr.on('data', (d) => {
+    stderrData += d.toString();
+  });
+
+  child.on('close', (code) => {
+    // If psql failed with non-zero exit code
+    if (code !== 0 && stderrData && !stderrData.includes('NOTICE') && !stderrData.includes('ALTER DEFAULT PRIVILEGES')) {
+      console.error(`Import error [${proj}]:`, stderrData);
+      if (!res.headersSent) {
+        return res.status(400).json({ success: false, message: stderrData });
+      }
     }
 
     // Auto-grant permissions on newly imported tables & sequences to the dedicated project user
@@ -858,11 +881,25 @@ app.post('/api/projects/:name/import', async (req, res) => {
       }
     });
 
-    res.json({ success: true, message: 'Database schema and data imported successfully!' });
+    if (!res.headersSent) {
+      res.json({ success: true, message: 'Database schema and data imported successfully!' });
+    }
   });
 
-  child.stdin.write(sql);
-  child.stdin.end();
+  child.on('error', (err) => {
+    console.error(`Import spawn error [${proj}]:`, err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  });
+
+  // Support both JSON body payload and raw HTTP stream piping
+  if (req.body && typeof req.body.sql === 'string' && req.body.sql.length > 0) {
+    child.stdin.write(req.body.sql);
+    child.stdin.end();
+  } else {
+    req.pipe(child.stdin);
+  }
 });
 
 // ====================================================================
