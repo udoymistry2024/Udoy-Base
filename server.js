@@ -779,9 +779,15 @@ async function sanitizeRowData(client, tableName, dataObj) {
           const lower = val.trim().toLowerCase();
           val = (lower === 'true' || lower === '1');
         }
-      } else if (type.includes('timestamp') || type.includes('date') || type.includes('uuid')) {
+      } else if (type.includes('timestamp') || type.includes('date') || type.includes('time') || type.includes('uuid')) {
         if (val === '' || val === null || val === undefined) {
           val = null;
+        }
+      } else if (type.includes('array') || type.includes('[]') || type.startsWith('_')) {
+        if (val === '' || val === null || val === undefined) {
+          val = null;
+        } else if (typeof val === 'string' && val.trim().startsWith('[') && val.trim().endsWith(']')) {
+          try { val = JSON.parse(val.trim()); } catch (e) {}
         }
       }
 
