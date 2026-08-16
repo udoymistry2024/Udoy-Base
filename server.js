@@ -733,14 +733,75 @@ app.get('/api/projects/:name/tables/:table/rows', async (req, res) => {
   }
 });
 
+async function sanitizeRowData(client, tableName, dataObj) {
+  try {
+    const colRes = await client.query(
+      `SELECT column_name, data_type, udt_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1`,
+      [tableName]
+    );
+    const colTypes = {};
+    colRes.rows.forEach(r => {
+      colTypes[r.column_name] = (r.data_type || r.udt_name || '').toLowerCase();
+    });
+
+    const sanitized = {};
+    for (const k of Object.keys(dataObj)) {
+      let val = dataObj[k];
+      const type = colTypes[k] || '';
+
+      if (type.includes('json')) {
+        if (val === '' || val === null || val === undefined) {
+          val = null;
+        } else if (typeof val === 'string') {
+          val = val.trim();
+          if (!val || val === '[object Object]') {
+            val = null;
+          } else {
+            try {
+              val = JSON.stringify(JSON.parse(val));
+            } catch (e) {
+              try { val = JSON.stringify(val); } catch (err) { val = null; }
+            }
+          }
+        } else if (typeof val === 'object') {
+          val = JSON.stringify(val);
+        }
+      } else if (type.includes('int') || type.includes('num') || type.includes('float') || type.includes('decimal') || type.includes('double')) {
+        if (val === '' || val === null || val === undefined) {
+          val = null;
+        } else if (typeof val === 'string' && !isNaN(val.trim()) && val.trim() !== '') {
+          val = Number(val.trim());
+        }
+      } else if (type.includes('bool')) {
+        if (val === '' || val === null || val === undefined) {
+          val = null;
+        } else if (typeof val === 'string') {
+          const lower = val.trim().toLowerCase();
+          val = (lower === 'true' || lower === '1');
+        }
+      } else if (type.includes('timestamp') || type.includes('date') || type.includes('uuid')) {
+        if (val === '' || val === null || val === undefined) {
+          val = null;
+        }
+      }
+
+      sanitized[k] = val;
+    }
+    return sanitized;
+  } catch (e) {
+    return dataObj;
+  }
+}
+
 app.post('/api/projects/:name/tables/:table/rows', async (req, res) => {
-  const data = req.body;
-  const keys = Object.keys(data);
-  if (!keys.length) return res.status(400).json({ success: false, message: 'Row data required' });
-  const cols = keys.map(k => `"${k}"`).join(', ');
-  const vals = keys.map((_, i) => `$${i + 1}`).join(', ');
+  const rawData = req.body;
+  if (!rawData || !Object.keys(rawData).length) return res.status(400).json({ success: false, message: 'Row data required' });
   try {
     const c = await getProjectClient(req.params.name);
+    const data = await sanitizeRowData(c, req.params.table, rawData);
+    const keys = Object.keys(data);
+    const cols = keys.map(k => `"${k}"`).join(', ');
+    const vals = keys.map((_, i) => `$${i + 1}`).join(', ');
     const r = await c.query(`INSERT INTO "${req.params.table}" (${cols}) VALUES (${vals}) RETURNING *`, keys.map(k => data[k]));
     await c.end();
     res.json({ success: true, row: r.rows[0] });
@@ -750,17 +811,19 @@ app.post('/api/projects/:name/tables/:table/rows', async (req, res) => {
 });
 
 app.put('/api/projects/:name/tables/:table/rows', async (req, res) => {
-  const { column, value, data } = req.body;
-  if (!column || value === undefined || !data || !Object.keys(data).length) {
+  const { column, value, data: rawData } = req.body;
+  if (!column || value === undefined || !rawData || !Object.keys(rawData).length) {
     return res.status(400).json({ success: false, message: 'column, value, and data object required' });
   }
-  const keys = Object.keys(data);
-  const setClauses = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-  const vals = keys.map(k => data[k]);
-  vals.push(value);
 
   try {
     const c = await getProjectClient(req.params.name);
+    const data = await sanitizeRowData(c, req.params.table, rawData);
+    const keys = Object.keys(data);
+    const setClauses = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+    const vals = keys.map(k => data[k]);
+    vals.push(value);
+
     const q = `UPDATE "${req.params.table}" SET ${setClauses} WHERE "${column}" = $${vals.length} RETURNING *`;
     const r = await c.query(q, vals);
     await c.end();

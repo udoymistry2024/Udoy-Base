@@ -1200,13 +1200,29 @@ function showEditRowModal(tableName, rowIndex) {
   let fieldsHtml = '';
   for (const col of tableInfo.columns) {
     const isPk = (col.column_name === pk);
-    const val = rowData[col.column_name] !== null && rowData[col.column_name] !== undefined ? rowData[col.column_name] : '';
+    let val = rowData[col.column_name];
+    const typeStr = (col.data_type || '').toLowerCase();
+    const isJson = typeStr.includes('json');
+
+    let displayVal = '';
+    if (val !== null && val !== undefined) {
+      if (typeof val === 'object') {
+        try { displayVal = JSON.stringify(val); } catch (e) { displayVal = String(val); }
+      } else {
+        displayVal = String(val);
+      }
+    }
+
     fieldsHtml += `
       <div class="auth-form-group" style="margin-bottom:12px">
         <label style="display:block;font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:4px">
           ${col.column_name} <span class="text-muted text-sm">(${col.data_type}${isPk ? ', Primary Identifier' : ''})</span>
         </label>
-        <input type="text" class="edit-row-field" data-col="${col.column_name}" value="${escapeHtml(String(val))}" ${isPk ? 'disabled style="opacity:0.6;cursor:not-allowed"' : ''}>
+        ${isJson ? `
+          <textarea class="edit-row-field mono" data-col="${col.column_name}" rows="3" style="width:100%;padding:8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;resize:vertical">${escapeHtml(displayVal)}</textarea>
+        ` : `
+          <input type="text" class="edit-row-field" data-col="${col.column_name}" value="${escapeHtml(displayVal)}" ${isPk ? 'disabled style="opacity:0.6;cursor:not-allowed"' : ''}>
+        `}
       </div>
     `;
   }
